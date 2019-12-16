@@ -140,6 +140,9 @@
   <ItemGroup>
     <ClCompile Include="SudoguAdmin.c" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="accounts.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
