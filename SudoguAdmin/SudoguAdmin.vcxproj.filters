@@ -18,8 +18,67 @@
     <ClCompile Include="SudoguAdmin.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cslib.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cmpfn.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strlib.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="generic.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="iterator.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="simpio.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strbuf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bst.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="map.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="accounts.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="cslib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cmpfn.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="strlib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="generic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="iterator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="itertype.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="simpio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="strbuf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bst.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="map.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
