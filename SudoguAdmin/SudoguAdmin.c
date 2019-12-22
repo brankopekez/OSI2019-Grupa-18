@@ -12,41 +12,44 @@
 
 /** @brief	Global variable for accounts config filename */
 
-const char* fileAccounts = "accounts.txt";
+const string fileAccounts = "accounts.txt";
+
+
+/** @brief	The city config filename  */
+const string fileCity = "city.txt";
 
 /**
- * @fn	int validateAccounts(string filenameAccounts, Map accountsMap)
+ * @fn	int fileToMap(string filename, Map map)
  *
- * @brief	Validates the accounts
+ * @brief	Reads a file and maps key:value pairs.
  *
  * @author	Pynikleois
+ * @date	12/22/2019
  *
- * @date	12/21/2019
+ * @param 	filename	Filename of the file.
+ * @param 	map			The map.
  *
- * @param 	filenameAccounts	The accounts config filename.
- * @param 	accountsMap			The accounts map.
- *
- * @returns	An int 1 if successful, 0 otherwise.
+ * @returns	An int. 1 on success, 0 otherwise.
  */
 
-int validateAccounts(string filenameAccounts, Map accountsMap)
+int fileToMap(string filename, Map map)
 {
-	FILE* inFile = fopen(filenameAccounts, "r");
+	FILE* inFile = fopen(filename, "r");
 	if (!inFile) exit(EXIT_FAILURE);
 	string line;
 	while ((line = readLine(inFile)) != NULL) {
 		int delimPos = findChar(':', line, 0);
 
-		string username = substring(line, 0, delimPos - 1);
-		string password = substring(line, delimPos + 1, stringLength(line) - 1);
-		if (stringLength(username) == 0 || stringLength(password) == 0) {
+		string key = substring(line, 0, delimPos - 1);
+		string value = substring(line, delimPos + 1, stringLength(line) - 1);
+		if (stringLength(key) == 0 || stringLength(value) == 0) {
 			return 0;
 		}
 		else {
-			if (containsKeyMap(accountsMap, username) == true) {
+			if (containsKeyMap(map, key) == true) {
 				return 0;
 			}
-			putMap(accountsMap, username, password);
+			putMap(map, key, value);
 		}
 		freeBlock(line);
 	}
@@ -55,31 +58,31 @@ int validateAccounts(string filenameAccounts, Map accountsMap)
 }
 
 /**
- * @fn	void freeAccountsMap(Map accountsMap)
+ * @fn	void freeMapFields(Map Map)
  *
  * @brief	Frees accounts map and all of its allocated fields.
  *
  * @author	Pynikleois
  * @date	12/21/2019
  *
- * @param 	accountsMap	The accounts map.
+ * @param 	Map	The accounts map.
  */
 
-void freeAccountsMap(Map accountsMap)
+void freeMapFields(Map Map)
 {
 	string key;
-	Iterator iterator = newIterator(accountsMap);
+	Iterator iterator = newIterator(Map);
 	while (stepIterator(iterator, &key)) {
-		freeBlock(getMap(accountsMap, key));
+		freeBlock(getMap(Map, key));
 	}
 	freeIterator(iterator);
-	iterator = newIterator(accountsMap);
+	iterator = newIterator(Map);
 	while (stepIterator(iterator, &key)) {
 		freeBlock(key);
 	}
 	freeIterator(iterator);
 
-	freeMap(accountsMap);
+	freeMap(Map);
 }
 
 /**
@@ -152,9 +155,9 @@ StringBuffer readPassword(void)
 int login(string* username)
 {
 	Map accountsMap = newMap();
-	if (validateAccounts((string)fileAccounts, accountsMap) == 0)
+	if (fileToMap(fileAccounts, accountsMap) == 0)
 	{
-		freeAccountsMap(accountsMap);
+		freeMapFields(accountsMap);
 		error("Konfiguracioni fajl %s nije ispravan.\n", fileAccounts);
 	}
 	printf("Unesite korisnicko ime: ");
@@ -167,7 +170,7 @@ int login(string* username)
 	{
 		printf("Pogresan unos.\n");
 		freeStringBuffer(passwordBuffer);
-		freeAccountsMap(accountsMap);
+		freeMapFields(accountsMap);
 		return 0;
 	}
 
@@ -181,20 +184,31 @@ int login(string* username)
 		else {
 			fprintf(stderr, "Wrong password.\n");
 			freeStringBuffer(passwordBuffer);
-			freeAccountsMap(accountsMap);
+			freeMapFields(accountsMap);
 			return 0;
 		}
 	}
 	else {
 		fprintf(stderr, "There is no account associated with %s.\n", *username);
 		freeStringBuffer(passwordBuffer);
-		freeAccountsMap(accountsMap);
+		freeMapFields(accountsMap);
 		return 0;
 	}
 	freeStringBuffer(passwordBuffer);
-	freeAccountsMap(accountsMap);
+	freeMapFields(accountsMap);
 	return 1;
 }
+
+/**
+ * @fn	void logout(string username)
+ *
+ * @brief	Logout
+ *
+ * @author	Pynikleois
+ * @date	12/22/2019
+ *
+ * @param 	username	The username.
+ */
 
 void logout(string username)
 {
@@ -210,6 +224,15 @@ int main(void)
 	while (true) {
 		if (login(&username) != 0)
 		{
+			Map cityMap = newMap();
+			if (fileToMap(fileCity, cityMap) != 1) {
+				fprintf(stderr, "Neispravna konfiguracija parametara grada unutar datoteke %s.\n", fileCity);
+				freeMapFields(cityMap);
+			}
+			else {
+				string cityName = getMap(cityMap, "name");
+				printf("Naziv grada: %s.\n", cityName);
+			}
 			logout(username);
 		}
 	}

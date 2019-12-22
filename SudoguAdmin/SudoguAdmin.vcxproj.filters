@@ -48,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="accounts.txt" />
+    <Text Include="city.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cslib.h">
