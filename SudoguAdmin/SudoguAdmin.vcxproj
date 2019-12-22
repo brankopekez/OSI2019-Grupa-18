@@ -85,7 +85,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -138,7 +138,32 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="bst.c" />
+    <ClCompile Include="cmpfn.c" />
+    <ClCompile Include="cslib.c" />
+    <ClCompile Include="generic.c" />
+    <ClCompile Include="iterator.c" />
+    <ClCompile Include="map.c" />
+    <ClCompile Include="simpio.c" />
+    <ClCompile Include="strbuf.c" />
+    <ClCompile Include="strlib.c" />
     <ClCompile Include="SudoguAdmin.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="accounts.txt" />
+    <Text Include="city.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="bst.h" />
+    <ClInclude Include="cmpfn.h" />
+    <ClInclude Include="cslib.h" />
+    <ClInclude Include="generic.h" />
+    <ClInclude Include="iterator.h" />
+    <ClInclude Include="itertype.h" />
+    <ClInclude Include="map.h" />
+    <ClInclude Include="simpio.h" />
+    <ClInclude Include="strbuf.h" />
+    <ClInclude Include="strlib.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
