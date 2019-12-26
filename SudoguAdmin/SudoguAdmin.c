@@ -8,6 +8,7 @@
 #include "strlib.h"
 #include "strbuf.h"
 #include "generic.h"
+#include "EventCategory.h"
 
 
 /** @brief	Global variable for accounts config filename */
