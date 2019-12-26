@@ -1,13 +1,21 @@
+/**
+ * @file	EventCategory.h.
+ *
+ * @brief	Declares the event category interface.
+ */
+
 #ifndef _event_category_h
 #define _event_category_h
 
+#include "cslib.h"
+
 /**
- * @struct	EventCategoryCDT*
+ * @typedef	EventCategoryCDT*
  *
  * @brief	An event category type.
  *
  * @author	Pynikleois
- * @date	12/26/2019
+ * @date	26.12.2019.
  */
 
 typedef struct EventCategoryCDT* EventCategory;
@@ -18,7 +26,7 @@ typedef struct EventCategoryCDT* EventCategory;
  * @brief	Creates a new event category.
  *
  * @author	Pynikleois
- * @date	12/26/2019
+ * @date	26.12.2019.
  *
  * @returns	An EventCategory.
  */
@@ -31,7 +39,7 @@ EventCategory newEventCategory(void);
  * @brief	Frees already created event category.
  *
  * @author	Pynikleois
- * @date	12/26/2019
+ * @date	26.12.2019.
  *
  * @param 	category	The category.
  */
@@ -44,7 +52,7 @@ void freeEventCategory(EventCategory category);
  * @brief	Gets event category name.
  *
  * @author	Pynikleois
- * @date	12/26/2019
+ * @date	26.12.2019.
  *
  * @param 	category	The category.
  *
@@ -59,7 +67,7 @@ string getEventCategoryName(EventCategory category);
  * @brief	Sets event category name.
  *
  * @author	Pynikleois
- * @date	12/26/2019
+ * @date	26.12.2019.
  *
  * @param 	category	The category.
  * @param 	name		The name.

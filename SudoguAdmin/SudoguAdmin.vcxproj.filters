@@ -48,6 +48,9 @@
     <ClCompile Include="EventCategory.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Event.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="accounts.txt" />
@@ -85,6 +88,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="EventCategory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Event.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

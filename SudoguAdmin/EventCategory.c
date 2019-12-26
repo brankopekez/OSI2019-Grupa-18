@@ -1,3 +1,9 @@
+/**
+ * @file	EventCategory.c.
+ *
+ * @brief	Event category implementation.
+ */
+
 #include "EventCategory.h"
 #include "cslib.h"
 

@@ -141,6 +141,7 @@
     <ClCompile Include="bst.c" />
     <ClCompile Include="cmpfn.c" />
     <ClCompile Include="cslib.c" />
+    <ClCompile Include="Event.c" />
     <ClCompile Include="EventCategory.c" />
     <ClCompile Include="generic.c" />
     <ClCompile Include="iterator.c" />
@@ -158,6 +159,7 @@
     <ClInclude Include="bst.h" />
     <ClInclude Include="cmpfn.h" />
     <ClInclude Include="cslib.h" />
+    <ClInclude Include="Event.h" />
     <ClInclude Include="EventCategory.h" />
     <ClInclude Include="generic.h" />
     <ClInclude Include="iterator.h" />

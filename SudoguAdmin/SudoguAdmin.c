@@ -25,7 +25,7 @@ const string fileCity = "city.txt";
  * @brief	Reads a file and maps key:value pairs.
  *
  * @author	Pynikleois
- * @date	12/22/2019
+ * @date	26.12.2019.
  *
  * @param 	filename	Filename of the file.
  * @param 	map			The map.
@@ -64,7 +64,7 @@ int fileToMap(string filename, Map map)
  * @brief	Frees accounts map and all of its allocated fields.
  *
  * @author	Pynikleois
- * @date	12/21/2019
+ * @date	26.12.2019.
  *
  * @param 	Map	The accounts map.
  */
@@ -92,7 +92,7 @@ void freeMapFields(Map Map)
  * @brief	Reads the password from a stdin.
  *
  * @author	Pynikleois
- * @date	12/21/2019
+ * @date	26.12.2019.
  *
  * @returns	The StringBuffer containing a password.
  */
@@ -140,13 +140,12 @@ StringBuffer readPassword(void)
 }
 
 /**
- * @fn	int login(string *username)
+ * @fn	int login(string* username)
  *
  * @brief	Logins a user.
  *
  * @author	Pynikleois
- *
- * @date	12/21/2019
+ * @date	26.12.2019.
  *
  * @param [in,out]	username	If non-null, the username.
  *
@@ -206,7 +205,7 @@ int login(string* username)
  * @brief	Logout
  *
  * @author	Pynikleois
- * @date	12/22/2019
+ * @date	26.12.2019.
  *
  * @param 	username	The username.
  */
