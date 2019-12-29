@@ -34,6 +34,7 @@ Event newEvent(void)
 	event->location = NULL;
 	event->category = NULL;
 	event->time = 0;
+	return event;
 }
 
 void freeEvent(Event event)

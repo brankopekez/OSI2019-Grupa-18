@@ -27,6 +27,7 @@ EventCategory newEventCategory(void)
 	EventCategory category;
 	category = newBlock(EventCategory);
 	category->name = NULL;
+    return category;
 }
 
 void freeEventCategory(EventCategory category)
