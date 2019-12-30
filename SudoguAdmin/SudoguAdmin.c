@@ -1,4 +1,8 @@
-#define _WIN32_WINNT 0x0500
+﻿#define _WIN32_WINNT 0x0500
+
+#ifndef UNICODE
+#define UNICODE
+#endif
 
 #include <stdio.h>
 #include <conio.h>
@@ -12,8 +16,21 @@
 #include "strbuf.h"
 #include "generic.h"
 #include "EventCategory.h"
+#include "Event.h"
+#include "vector.h"
+#include <time.h>
+#include <locale.h>
+#include "Menu.h"
+#include "utilities.h"
+#include "Table.h"
 
-enum {
+/**
+ * @enum	F_COLOR
+ *
+ * @brief	Values that represent foreground colors.
+ */
+
+enum F_COLOR {
 	F_BLACK = 0,
 	F_DARKBLUE = FOREGROUND_BLUE,
 	F_DARKGREEN = FOREGROUND_GREEN,
@@ -32,7 +49,13 @@ enum {
 	F_WHITE = FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE,
 };
 
-enum {
+/**
+ * @enum	B_COLOR
+ *
+ * @brief	Values that represent background colors.
+ */
+
+enum B_COLOR {
 	B_BLACK = 0,
 	B_DARKBLUE = BACKGROUND_BLUE,
 	B_DARKGREEN = BACKGROUND_GREEN,
@@ -51,13 +74,32 @@ enum {
 	B_WHITE = BACKGROUND_INTENSITY | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE,
 };
 
-string menu[] = {
+/** @brief	The array of menu options. */
+string menuOptions[] = {
 	"Upravljanje dogadjajima",
 	"Upravljanje kategorijama",
 	"Odjava",
 	"Izlaz"
 };
 
+
+/** @brief	The events table header (column names). */
+string eventsHeader[] = {
+	"Naziv",
+	"Lokacija",
+	"Kategorija",
+	"Datum i vrijeme"
+};
+
+
+/** @brief	The events table footer. */
+string eventsFooter[] = {
+	"ESC: Izlaz.",
+	"RETURN: Detalji.",
+	"DELETE: Obriši.",
+	"F10: Novi događaj.",
+	"F9: Sortiraj listu."
+};
 
 /** @brief	Global variable for accounts config filename */
 const string fileAccounts = "accounts.txt";
@@ -86,8 +128,10 @@ WORD wOldColorAttrs;
 /** @brief	Information describing the console screen sb */
 CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
 
-const int windowSizeX = 120;
-const int windowSizeY = 45;
+WORD HIGHLIGHT_ATTRIBUTES = F_RED | B_WHITE | COMMON_LVB_REVERSE_VIDEO;
+
+const int windowSizeX = 121;
+const int windowSizeY = 33;
 
 void error_msg(const char* format, ...) {
 	va_list args;
@@ -126,8 +170,7 @@ void error_msg(const char* format, ...) {
  * @returns	An int. 1 on success, 0 otherwise.
  */
 
-int fileToMap(string filename, Map map)
-{
+int fileToMap(string filename, Map map) {
 	FILE* inFile = fopen(filename, "r");
 	if (!inFile) {
 		error_msg("fopen()");
@@ -164,8 +207,7 @@ int fileToMap(string filename, Map map)
  * @param 	Map	The accounts map.
  */
 
-void freeMapFields(Map Map)
-{
+void freeMapFields(Map Map) {
 	string key;
 	Iterator iterator = newIterator(Map);
 	while (stepIterator(iterator, &key)) {
@@ -192,21 +234,18 @@ void freeMapFields(Map Map)
  * @returns	The StringBuffer containing a read password.
  */
 
-StringBuffer readPassword(void)
-{
+StringBuffer readPassword(void) {
 	StringBuffer password;
 	password = newStringBuffer();
 	int ch;
 	int i = -1; // this variable counts input characters
 
-	do
-	{
+	do {
 		++i;
 		ch = _getch();
 		if (ch == 0x08) // backspace
 		{
-			if (i > 0)
-			{
+			if (i > 0) {
 				_putch('\b');
 				_putch(' ');
 				_putch('\b');
@@ -233,24 +272,20 @@ StringBuffer readPassword(void)
 	} while (ch != '\n');
 }
 
-void clear(int startX, int startY, int height, int width)
-{
+void clearCordinates(int startX, int startY, int height, int width) {
 	COORD here;
 	DWORD cWritten;
-	for (int i = 0; i < height; i++)
-	{
+	for (int i = 0; i < height; i++) {
 		here.Y = startY + i;
-		for (int j = 0; j < width; j++)
-		{
+		for (int j = 0; j < width; j++) {
 			here.X = startX + j;
 			WriteConsoleOutputCharacter(hStdout, L" ", 1, here, &cWritten);
 		}
 	}
 
 }
-
-DWORD printToConsole(string format, ...)
-{
+/*
+DWORD printToConsole(string format, ...) {
 	StringBuffer sb = newStringBuffer();
 	va_list args;
 	int capacity;
@@ -264,20 +299,19 @@ DWORD printToConsole(string format, ...)
 
 	DWORD cWritten;
 	if (!WriteFile(
-		hStdout,               // output handle 
-		getString(sb),         // prompt string 
-		sizeStringBuffer(sb),  // string length 
-		&cWritten,             // bytes written 
-		NULL))                 // not overlapped 
+		hStdout,               // output handle
+		getString(sb),         // prompt string
+		sizeStringBuffer(sb),  // string length
+		&cWritten,             // bytes written
+		NULL))                 // not overlapped
 	{
 		error_msg("WriteFile");
 	}
 	freeStringBuffer(sb);
 	return cWritten;
 }
-
-DWORD printTextAttributes(WORD wAttributes, string format, ...)
-{
+*/
+DWORD printTextAttributes(WORD wAttributes, string format, ...) {
 	StringBuffer sb = newStringBuffer();
 	DWORD ret;
 	va_list args;
@@ -293,20 +327,18 @@ DWORD printTextAttributes(WORD wAttributes, string format, ...)
 	WORD wOldColor;
 
 	// Save the current text colors. 
-	if (!GetConsoleScreenBufferInfo(hStdout, &csbiInfo))
-	{
+	if (!GetConsoleScreenBufferInfo(hStdout, &csbiInfo)) {
 		error_msg("GetConsoleScreenBufferInfo");
 	}
 
 	wOldColor = csbiInfo.wAttributes;
 
 	// Set the text attributes. 
-	if (!SetConsoleTextAttribute(hStdout, wAttributes))
-	{
+	if (!SetConsoleTextAttribute(hStdout, wAttributes)) {
 		error_msg("SetConsoleTextAttribute");
 	}
 
-	ret = printToConsole(getString(sb));
+	ret = PrintToConsole(getString(sb));
 
 	// Restore the original text colors. 
 	SetConsoleTextAttribute(hStdout, wOldColor);
@@ -315,8 +347,7 @@ DWORD printTextAttributes(WORD wAttributes, string format, ...)
 	return ret;
 }
 
-DWORD printCenter(string format, ...)
-{
+DWORD printCenter(string format, ...) {
 	StringBuffer sb = newStringBuffer();
 	DWORD ret;
 	va_list args;
@@ -335,8 +366,7 @@ DWORD printCenter(string format, ...)
 
 	// Get the current screen sb size and window position. 
 
-	if (!GetConsoleScreenBufferInfo(hStdout, &csbiInfo))
-	{
+	if (!GetConsoleScreenBufferInfo(hStdout, &csbiInfo)) {
 		printf("GetConsoleScreenBufferInfo (%d)\n", GetLastError());
 		return 0;
 	}
@@ -345,14 +375,13 @@ DWORD printCenter(string format, ...)
 	cursorPosition.X = (sizeConsole.X - sizeStringBuffer(sb)) / 2;
 	SetConsoleCursorPosition(hStdout, cursorPosition);
 
-	ret = printToConsole(getString(sb));
+	ret = PrintToConsole(getString(sb));
 
 	freeStringBuffer(sb);
 	return ret;
 }
 
-DWORD printCenterAttributes(WORD wAttributes, string format, ...)
-{
+DWORD printCenterAttributes(WORD wAttributes, string format, ...) {
 	StringBuffer sb = newStringBuffer();
 	DWORD ret;
 	va_list args;
@@ -371,8 +400,7 @@ DWORD printCenterAttributes(WORD wAttributes, string format, ...)
 
 	// Get the current screen sb size and window position. 
 
-	if (!GetConsoleScreenBufferInfo(hStdout, &csbiInfo))
-	{
+	if (!GetConsoleScreenBufferInfo(hStdout, &csbiInfo)) {
 		printf("GetConsoleScreenBufferInfo (%d)\n", GetLastError());
 		return 0;
 	}
@@ -387,8 +415,7 @@ DWORD printCenterAttributes(WORD wAttributes, string format, ...)
 	return ret;
 }
 
-void cls(HANDLE hConsole)
-{
+void cls(HANDLE hConsole) {
 	COORD coordScreen = { 0, 0 };    // home for the cursor 
 	DWORD cCharsWritten;
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -397,8 +424,7 @@ void cls(HANDLE hConsole)
 
 	// Get the number of character cells in the current buffer. 
 
-	if (!GetConsoleScreenBufferInfo(hConsole, &csbi))
-	{
+	if (!GetConsoleScreenBufferInfo(hConsole, &csbi)) {
 		return;
 	}
 
@@ -408,7 +434,7 @@ void cls(HANDLE hConsole)
 	// Fill the entire screen with blanks.
 
 	if (!FillConsoleOutputCharacter(hConsole,        // Handle to console screen buffer 
-		(TCHAR)' ',     // Character to write to the buffer
+		(TCHAR) ' ',     // Character to write to the buffer
 		dwConSize,       // Number of cells to write 
 		coordScreen,     // Coordinates of first cell 
 		&cCharsWritten))// Receive number of characters written
@@ -418,8 +444,7 @@ void cls(HANDLE hConsole)
 
 	// Get the current text attribute.
 
-	if (!GetConsoleScreenBufferInfo(hConsole, &csbi))
-	{
+	if (!GetConsoleScreenBufferInfo(hConsole, &csbi)) {
 		return;
 	}
 
@@ -439,15 +464,13 @@ void cls(HANDLE hConsole)
 	SetConsoleCursorPosition(hConsole, oldCordinates);
 }
 
-void advanceCursor(int count)
-{
+void advanceCursor(int count) {
 	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
 	COORD cursorPosition;
 
 	// Get the current screen sb size and window position. 
 
-	if (!GetConsoleScreenBufferInfo(hStdout, &csbiInfo))
-	{
+	if (!GetConsoleScreenBufferInfo(hStdout, &csbiInfo)) {
 		error_msg("GetConsoleScreenBufferInfo (%d)\n", GetLastError());
 	}
 	cursorPosition = csbiInfo.dwCursorPosition;
@@ -455,13 +478,11 @@ void advanceCursor(int count)
 	SetConsoleCursorPosition(hStdout, cursorPosition);
 }
 
-void loginAttempt(string* inUsername, string* inPassword)
-{
+void loginAttempt(string* inUsername, string* inPassword) {
 	LPSTR prompt1 = "Username: ";
 	LPSTR prompt2 = "Password: ";
 	const int promptCount = 2;
-	CHAR chBuffer[256];
-	DWORD cRead, cWritten;
+	DWORD cWritten;
 	COORD cursorPosition;
 
 	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
@@ -469,8 +490,7 @@ void loginAttempt(string* inUsername, string* inPassword)
 
 	// Get the current screen sb size and window position. 
 
-	if (!GetConsoleScreenBufferInfo(hStdout, &csbiInfo))
-	{
+	if (!GetConsoleScreenBufferInfo(hStdout, &csbiInfo)) {
 		error_msg("GetConsoleScreenBufferInfo (%d)\n", GetLastError());
 	}
 
@@ -480,18 +500,18 @@ void loginAttempt(string* inUsername, string* inPassword)
 	cursorPosition.Y = (sizeConsole.Y - promptCount) / 2;
 
 	//system("cls");
-	clear(0, cursorPosition.Y, 3, sizeConsole.X);
+	clearCordinates(0, cursorPosition.Y, 3, sizeConsole.X);
 
 	SetConsoleCursorPosition(hStdout, cursorPosition);
 
-	cWritten = printToConsole(prompt1);
+	cWritten = PrintToConsole(prompt1);
 
 	*inUsername = readLine(stdin);
 
 	++cursorPosition.Y;
 	SetConsoleCursorPosition(hStdout, cursorPosition);
 
-	printToConsole(prompt2);
+	PrintToConsole(prompt2);
 
 	StringBuffer passwordBuffer = NULL;
 	passwordBuffer = readPassword();
@@ -512,29 +532,24 @@ void loginAttempt(string* inUsername, string* inPassword)
  * @returns	An int 1 if successful, 0 otherwise.
  */
 
-void login(void)
-{
+void login(void) {
 	Map accountsMap = NULL;
 	string inUsername = NULL, inPassword = NULL;
 
 	cls(hStdout);
 	while (true) {
-		if (accountsMap != NULL)
-		{
+		if (accountsMap != NULL) {
 			freeMapFields(accountsMap);
 		}
-		if (inUsername != NULL)
-		{
+		if (inUsername != NULL) {
 			freeBlock(inUsername);
 		}
-		if (inPassword != NULL)
-		{
+		if (inPassword != NULL) {
 			freeBlock(inPassword);
 		}
 
 		accountsMap = newMap();
-		if (fileToMap(fileAccounts, accountsMap) == 0)
-		{
+		if (fileToMap(fileAccounts, accountsMap) == 0) {
 			freeMapFields(accountsMap);
 			error_msg("Konfiguracioni fajl %s nije ispravan.\n", fileAccounts);
 		}
@@ -544,44 +559,36 @@ void login(void)
 		cls(hStdout);
 		advanceCursor(3);
 
-		if (stringLength(inUsername) == 0 || stringLength(inPassword) == 0)
-		{
+		if (stringLength(inUsername) == 0 || stringLength(inPassword) == 0) {
 			printCenterAttributes(F_RED | B_WHITE, "Pogresan unos.");
 			continue;
 		}
 
-		if (containsKeyMap(accountsMap, inUsername) == true)
-		{
+		if (containsKeyMap(accountsMap, inUsername) == true) {
 			string correctPassword = getMap(accountsMap, inUsername);
-			if (stringCompare(inPassword, correctPassword) == 0)
-			{
+			if (stringCompare(inPassword, correctPassword) == 0) {
 				printCenterAttributes(F_CYAN | B_WHITE, "Dobrodosli %s.\n", inUsername);
 				username = inUsername;
 				break;
 			}
-			else
-			{
+			else {
 				printCenterAttributes(F_RED | B_WHITE, "Pogresna lozinka.");
 				continue;
 			}
 		}
-		else
-		{
+		else {
 			printCenterAttributes(F_RED | B_WHITE, "Ne postoji nalog sa imenom '%s'.\n", inUsername);
 			continue;
 		}
 	}
 
-	if (accountsMap != NULL)
-	{
+	if (accountsMap != NULL) {
 		freeMapFields(accountsMap);
 	}
-	if (inUsername != NULL)
-	{
+	if (inUsername != NULL) {
 		freeBlock(inUsername);
 	}
-	if (inPassword != NULL)
-	{
+	if (inPassword != NULL) {
 		freeBlock(inPassword);
 	}
 }
@@ -597,129 +604,134 @@ void login(void)
  * @param 	username	The username.
  */
 
-void logout(string username)
-{
+void logout(void) {
 	freeBlock(username);
 }
 
-int multipleChoice(bool canCancel, string* options, int count)
-{
-	int startX;
-	int startY;
-	const int optionsPerLine = 1;
-	const int spacingPerLine = 25;
-
-	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-
-	startX = (windowSizeX - optionsPerLine * spacingPerLine) / 2;
-	startY = (windowSizeY - count) / 2;
-
-	DWORD cRead;
-	COORD here;
-	INPUT_RECORD event;
-	BOOL done = FALSE;
-
-	// hide cursor
+void hideCursor(void) {
 	CONSOLE_CURSOR_INFO info;
 	info.dwSize = 100;
 	info.bVisible = FALSE;
 	SetConsoleCursorInfo(hStdout, &info);
+}
 
-	DWORD fdwMode, fdwOldMode;
-
-	// Turn off the line input and echo input modes 
-	if (!GetConsoleMode(hStdin, &fdwOldMode))
-	{
-		error_msg("GetConsoleMode");
-	}
-
-	fdwMode = fdwOldMode &
-		~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT);
-	if (!SetConsoleMode(hStdin, fdwMode))
-	{
-		error_msg("SetConsoleMode");
-	}
-
-	int currentSelection = 0;
-	cls(hStdout);
-	while(!done)
-	{
-		for (int i = 0; i < count; i++)
-		{
-			here.X = startX + (i % optionsPerLine) * spacingPerLine;
-			here.Y = startY + i / optionsPerLine;
-
-			SetConsoleCursorPosition(hStdout, here);
-
-			if (i == currentSelection) 
-			{
-				printTextAttributes(F_RED | B_WHITE | COMMON_LVB_UNDERSCORE, options[i]);
-			}
-			else
-			{
-				printToConsole(options[i]);
-			}
-		}
-		system("pause>nul");
-		if (WaitForSingleObject(hStdin, 200) == WAIT_OBJECT_0)  /* if kbhit */
-		{
-			/* Get the input event */
-			ReadConsoleInput(hStdin, &event, 1, &cRead);
-
-			/* Only respond to key release events */
-			if ((event.EventType == KEY_EVENT) && !event.Event.KeyEvent.bKeyDown)
-				switch (event.Event.KeyEvent.wVirtualKeyCode)
-				{
-				case VK_LEFT:
-					if (currentSelection % optionsPerLine > 0)
-						currentSelection--;
-					break;
-				case VK_RIGHT:
-					if (currentSelection % optionsPerLine < optionsPerLine - 1)
-						currentSelection++;
-					break;
-				case VK_UP:
-					if (currentSelection >= optionsPerLine)
-						currentSelection -= optionsPerLine;
-					break;
-				case VK_DOWN:
-					if (currentSelection + optionsPerLine < count)
-						currentSelection += optionsPerLine;
-					break;
-				case VK_ESCAPE:
-					if (canCancel) return -1;
-					break;
-				case VK_RETURN:
-					done = TRUE;
-					break;
-				default:
-					break;
-				}
-		}
-		//Sleep(100); // loop will only start again after 1/10 of a second
-	}
-
+void showCursor(void) {
+	CONSOLE_CURSOR_INFO info;
 	info.dwSize = 100;
 	info.bVisible = TRUE;
 	SetConsoleCursorInfo(hStdout, &info);
-
-	// Restore the original console mode. 
-	SetConsoleMode(hStdin, fdwOldMode);
-
-	return currentSelection;
 }
 
 void SetConsoleWindowSize(int x, int y);
 
 void windowSetup(void);
 
-int main(void)
-{
+int main(void) {
+	int menuOption;
 	windowSetup();
+	Vector events = newVector();
+	Event e;
+
+	for (int i = 0; i < 45; i++) {
+		e = newEvent();
+		StringBuffer sb = newStringBuffer();
+		appendString(sb, "name");
+		char buffer[10];
+		_itoa(i, buffer, 10);
+		appendString(sb, buffer);
+		setEventName(e, getString(sb));
+		setEventLocation(e, "location");
+		setEventCategory(e, "category");
+		time_t long_time;
+		time(&long_time);
+		long_time += 10000 * i;
+		setEventTime(e, long_time);
+		addVector(events, e);
+	}
+
+	Menu menu = newMenu();
+	Vector menuVector = getMenuOptions(menu);
+	freeVector(menuVector);
+	Vector tmp = arrayToVector(menuOptions, 4);
+	setMenuOptions(menu, tmp);
+	centerMenu(menu);
+	setHighlightAttributes(menu, HIGHLIGHT_ATTRIBUTES);
+
+	Table eventsTable = NewTable();
+	SetDataTable(eventsTable, events);
+	Vector columns = newVector();
+	for (int i = 0; i < 45; i++) {
+		Vector record = newVector();
+		addVector(record, getEventName(getVector(events, i)));
+		addVector(record, getEventLocation(getVector(events, i)));
+		addVector(record, getEventCategory(getVector(events, i)));
+
+		struct tm newtime;
+		char buff[70];
+		time_t long_time = getEventTime(getVector(events, i));
+		errno_t err;
+
+		// Convert to local time.
+		err = localtime_s(&newtime, &long_time);
+		if (err) {
+			error_msg("Invalid argument to localtime_s.");
+		}
+
+		if (!strftime(buff, sizeof buff, "%A %x %R", &newtime)) {
+			error_msg("strftime");
+		}
+
+		string tmp = copyString(buff);
+		
+		addVector(record, tmp);
+		
+		addVector(columns, record);
+	}
+	SetColumnsTable(eventsTable, columns);
+
+	Vector header = newVector();
+	for (int i = 0; i < 4; i++) {
+		string tmp = copyString(eventsHeader[i]);
+		addVector(header, tmp);
+	}
+	SetHeaderTable(eventsTable, header);
+	header = newVector();
+	for (int i = 0; i < 5; i++) {
+		string tmp = copyString(eventsFooter[i]);
+		addVector(header, tmp);
+	}
+	SetFooterTable(eventsTable, header);
+
+	SetHighAttrTable(eventsTable, HIGHLIGHT_ATTRIBUTES);
+
+	int tableSelection;
 
 	while (true) {
 		login();
-		multipleChoice(false, menu, 4);
+		if (!mainMenu(menu, &menuOption)) {
+			error_msg("mainMenu");
+		}
+		switch (menuOption) {
+		case 0:
+			MainTable(eventsTable, &tableSelection);
+			break;
+		case 1:
+
+			break;
+		case 2:
+			logout();
+			break;
+		case 3:
+			// Restore the original console mode. 
+			SetConsoleMode(hStdin, fdwSaveOldMode);
+
+			// Restore the original text colors. 
+			SetConsoleTextAttribute(hStdout, wOldColorAttrs);
+
+			return 0;
+		default:
+			break;
+		}
 		Map cityMap = newMap();
 		if (fileToMap(fileCity, cityMap) != 1) {
 			fprintf(stderr, "Neispravna konfiguracija parametara grada unutar datoteke %s.\n", fileCity);
@@ -729,8 +741,7 @@ int main(void)
 			string cityName = getMap(cityMap, "name");
 			printf("Naziv grada: %s.\n", cityName);
 		}
-		getchar();
-		logout(username);
+		logout();
 	}
 
 	// Restore the original console mode. 
@@ -742,50 +753,65 @@ int main(void)
 	return 0;
 }
 
-void windowSetup(void)
-{
+void windowSetup(void) {
+	// Set codepage. Needed for Serbian Latin chars.
+	if (!SetConsoleCP(1250)) {
+		error_msg("SetConsoleCP");
+	}
+	if (!SetConsoleOutputCP(1250)) {
+		error_msg("SetConsoleOutputCP");
+	}
+
+	// Set system locale.
+	setlocale(LC_ALL, "sr-Latn-BA");
+
+	// Set time zone from TZ environment variable. If TZ is not set,
+	// the operating system is queried to obtain the default value
+	// for the variable.
+	//
+	_tzset();
+
+	// Disable window resizing and maximizing.
 	HWND consoleWindow = GetConsoleWindow();
 	SetWindowLong(consoleWindow, GWL_STYLE, GetWindowLong(consoleWindow, GWL_STYLE) & ~WS_MAXIMIZEBOX & ~WS_SIZEBOX);
 	SetConsoleWindowSize(windowSizeX, windowSizeY);
 
-	// Get handles to STDIN and STDOUT. 
-
+	// Get handles to STDIN and STDOUT.
 	hStdin = GetStdHandle(STD_INPUT_HANDLE);
 	hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (hStdin == INVALID_HANDLE_VALUE || hStdout == INVALID_HANDLE_VALUE)
-	{
+	if (hStdin == INVALID_HANDLE_VALUE || hStdout == INVALID_HANDLE_VALUE) {
 		MessageBox(NULL, TEXT("GetStdHandle"), TEXT("Console Error"), MB_OK);
 		exit(EXIT_FAILURE);
 	}
 
-	// Save the current input mode, to be restored on exit. 
-
-	if (!GetConsoleMode(hStdin, &fdwSaveOldMode))
-	{
+	// Save the current input mode, to be restored on exit.
+	if (!GetConsoleMode(hStdin, &fdwSaveOldMode)) {
 		MessageBox(NULL, TEXT("GetConsoleMode"), TEXT("Console Error"), MB_OK);
 		exit(EXIT_FAILURE);
 	}
 
-	// Save the current text colors. 
-
-	if (!GetConsoleScreenBufferInfo(hStdout, &csbiInfo))
-	{
+	// Save the current text colors.
+	if (!GetConsoleScreenBufferInfo(hStdout, &csbiInfo)) {
 		MessageBox(NULL, TEXT("GetConsoleScreenBufferInfo"), TEXT("Console Error"), MB_OK);
 		exit(EXIT_FAILURE);
 	}
 
 	wOldColorAttrs = csbiInfo.wAttributes;
 
-	if (!SetConsoleTextAttribute(hStdout, B_WHITE))
-	{
+	// Set text attributes.
+	if (!SetConsoleTextAttribute(hStdout, B_WHITE)) {
 		MessageBox(NULL, TEXT("SetConsoleTextAttribute"), TEXT("Console Error"), MB_OK);
 		exit(EXIT_FAILURE);
 	}
+
+	// Show cursor.
+	showCursor();
+
+	// Clear screen.
 	system("cls");
 }
 
-void SetConsoleWindowSize(int x, int y)
-{
+void SetConsoleWindowSize(int x, int y) {
 	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
 
 	if (h == INVALID_HANDLE_VALUE)
@@ -809,8 +835,7 @@ void SetConsoleWindowSize(int x, int y)
 	SMALL_RECT winInfo = bufferInfo.srWindow;
 	COORD windowSize = { winInfo.Right - winInfo.Left + 1, winInfo.Bottom - winInfo.Top + 1 };
 
-	if (windowSize.X > x || windowSize.Y > y)
-	{
+	if (windowSize.X > x || windowSize.Y > y) {
 		// window size needs to be adjusted before the sb size can be reduced.
 		SMALL_RECT info =
 		{

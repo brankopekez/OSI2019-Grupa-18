@@ -87,6 +87,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>/source-charset:windows-1250 /execution-charset:windows-1250 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -111,7 +112,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -146,10 +147,14 @@
     <ClCompile Include="generic.c" />
     <ClCompile Include="iterator.c" />
     <ClCompile Include="map.c" />
+    <ClCompile Include="Menu.c" />
     <ClCompile Include="simpio.c" />
     <ClCompile Include="strbuf.c" />
     <ClCompile Include="strlib.c" />
     <ClCompile Include="SudoguAdmin.c" />
+    <ClCompile Include="Table.c" />
+    <ClCompile Include="utilities.c" />
+    <ClCompile Include="vector.c" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="accounts.txt" />
@@ -165,9 +170,13 @@
     <ClInclude Include="iterator.h" />
     <ClInclude Include="itertype.h" />
     <ClInclude Include="map.h" />
+    <ClInclude Include="Menu.h" />
     <ClInclude Include="simpio.h" />
     <ClInclude Include="strbuf.h" />
     <ClInclude Include="strlib.h" />
+    <ClInclude Include="Table.h" />
+    <ClInclude Include="utilities.h" />
+    <ClInclude Include="vector.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
