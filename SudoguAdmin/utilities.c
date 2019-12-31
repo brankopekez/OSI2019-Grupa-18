@@ -208,3 +208,17 @@ int PrintToConsoleFormatted(unsigned short options, const string format, ...) {
 
 	return cWritten;
 }
+
+void hideCursor(void) {
+	CONSOLE_CURSOR_INFO info;
+	info.dwSize = 100;
+	info.bVisible = FALSE;
+	SetConsoleCursorInfo(hStdout, &info);
+}
+
+void showCursor(void) {
+	CONSOLE_CURSOR_INFO info;
+	info.dwSize = 100;
+	info.bVisible = TRUE;
+	SetConsoleCursorInfo(hStdout, &info);
+}

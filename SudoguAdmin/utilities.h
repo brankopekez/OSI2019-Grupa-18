@@ -20,4 +20,8 @@ int PrintToConsole(const string format, ...);
 
 int PrintToConsoleFormatted(unsigned short options, const string format, ...);
 
+void hideCursor(void);
+
+void showCursor(void);
+
 #endif // !_utilities_h

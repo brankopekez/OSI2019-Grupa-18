@@ -76,7 +76,7 @@ enum B_COLOR {
 
 /** @brief	The array of menu options. */
 string menuOptions[] = {
-	"Upravljanje dogadjajima",
+	"Upravljanje događajima",
 	"Upravljanje kategorijama",
 	"Odjava",
 	"Izlaz"
@@ -104,6 +104,16 @@ string eventsFooter[] = {
 	"DELETE: Obriši.",
 	"F9: Novi događaj.",
 	"F10: Sortiraj listu."
+};
+
+string categoriesHeader[] = {
+	"Naziv kategorije događaja"
+};
+
+string categoriesFooter[] = {
+	"ESC: Izlaz.",
+	"DELETE: Obriši kategoriju.",
+	"F9: Dodaj novu kategoriju.",
 };
 
 /** @brief	Global variable for accounts config filename */
@@ -289,136 +299,6 @@ void clearCordinates(int startX, int startY, int height, int width) {
 	}
 
 }
-/*
-DWORD printToConsole(string format, ...) {
-	StringBuffer sb = newStringBuffer();
-	va_list args;
-	int capacity;
-
-	va_start(args, format);
-	capacity = printfCapacity(format, args);
-	va_end(args);
-	va_start(args, format);
-	sbFormat(sb, capacity, format, args);
-	va_end(args);
-
-	DWORD cWritten;
-	if (!WriteFile(
-		hStdout,               // output handle
-		getString(sb),         // prompt string
-		sizeStringBuffer(sb),  // string length
-		&cWritten,             // bytes written
-		NULL))                 // not overlapped
-	{
-		error_msg("WriteFile");
-	}
-	freeStringBuffer(sb);
-	return cWritten;
-}
-*/
-DWORD printTextAttributes(WORD wAttributes, string format, ...) {
-	StringBuffer sb = newStringBuffer();
-	DWORD ret;
-	va_list args;
-	int capacity;
-
-	va_start(args, format);
-	capacity = printfCapacity(format, args);
-	va_end(args);
-	va_start(args, format);
-	sbFormat(sb, capacity, format, args);
-	va_end(args);
-
-	WORD wOldColor;
-
-	// Save the current text colors. 
-	if (!GetConsoleScreenBufferInfo(hStdout, &csbiInfo)) {
-		error_msg("GetConsoleScreenBufferInfo");
-	}
-
-	wOldColor = csbiInfo.wAttributes;
-
-	// Set the text attributes. 
-	if (!SetConsoleTextAttribute(hStdout, wAttributes)) {
-		error_msg("SetConsoleTextAttribute");
-	}
-
-	ret = PrintToConsole(getString(sb));
-
-	// Restore the original text colors. 
-	SetConsoleTextAttribute(hStdout, wOldColor);
-
-	freeStringBuffer(sb);
-	return ret;
-}
-
-DWORD printCenter(string format, ...) {
-	StringBuffer sb = newStringBuffer();
-	DWORD ret;
-	va_list args;
-	int capacity;
-
-	va_start(args, format);
-	capacity = printfCapacity(format, args);
-	va_end(args);
-	va_start(args, format);
-	sbFormat(sb, capacity, format, args);
-	va_end(args);
-
-	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-	COORD sizeConsole;
-	COORD cursorPosition;
-
-	// Get the current screen sb size and window position. 
-
-	if (!GetConsoleScreenBufferInfo(hStdout, &csbiInfo)) {
-		printf("GetConsoleScreenBufferInfo (%d)\n", GetLastError());
-		return 0;
-	}
-	sizeConsole = csbiInfo.dwSize;
-	cursorPosition = csbiInfo.dwCursorPosition;
-	cursorPosition.X = (sizeConsole.X - sizeStringBuffer(sb)) / 2;
-	SetConsoleCursorPosition(hStdout, cursorPosition);
-
-	ret = PrintToConsole(getString(sb));
-
-	freeStringBuffer(sb);
-	return ret;
-}
-
-DWORD printCenterAttributes(WORD wAttributes, string format, ...) {
-	StringBuffer sb = newStringBuffer();
-	DWORD ret;
-	va_list args;
-	int capacity;
-
-	va_start(args, format);
-	capacity = printfCapacity(format, args);
-	va_end(args);
-	va_start(args, format);
-	sbFormat(sb, capacity, format, args);
-	va_end(args);
-
-	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-	COORD sizeConsole;
-	COORD cursorPosition;
-
-	// Get the current screen sb size and window position. 
-
-	if (!GetConsoleScreenBufferInfo(hStdout, &csbiInfo)) {
-		printf("GetConsoleScreenBufferInfo (%d)\n", GetLastError());
-		return 0;
-	}
-	sizeConsole = csbiInfo.dwSize;
-	cursorPosition = csbiInfo.dwCursorPosition;
-	cursorPosition.X = (sizeConsole.X - sizeStringBuffer(sb)) / 2;
-	SetConsoleCursorPosition(hStdout, cursorPosition);
-
-	ret = printTextAttributes(wAttributes, getString(sb));
-
-	freeStringBuffer(sb);
-	return ret;
-}
 
 void cls(HANDLE hConsole) {
 	COORD coordScreen = { 0, 0 };    // home for the cursor 
@@ -565,24 +445,23 @@ void login(void) {
 		advanceCursor(3);
 
 		if (stringLength(inUsername) == 0 || stringLength(inPassword) == 0) {
-			printCenterAttributes(F_RED | B_WHITE, "Pogresan unos.");
+			PrintToConsoleFormatted(CENTER_ALIGN, "Pogresan unos.");
 			continue;
 		}
 
 		if (containsKeyMap(accountsMap, inUsername) == true) {
 			string correctPassword = getMap(accountsMap, inUsername);
 			if (stringCompare(inPassword, correctPassword) == 0) {
-				printCenterAttributes(F_CYAN | B_WHITE, "Dobrodosli %s.\n", inUsername);
 				username = inUsername;
 				break;
 			}
 			else {
-				printCenterAttributes(F_RED | B_WHITE, "Pogresna lozinka.");
+				PrintToConsoleFormatted(CENTER_ALIGN, "Pogresna lozinka.");
 				continue;
 			}
 		}
 		else {
-			printCenterAttributes(F_RED | B_WHITE, "Ne postoji nalog sa imenom '%s'.\n", inUsername);
+			PrintToConsoleFormatted(CENTER_ALIGN, "Ne postoji nalog sa imenom '%s'.\n", inUsername);
 			continue;
 		}
 	}
@@ -611,20 +490,6 @@ void login(void) {
 
 void logout(void) {
 	freeBlock(username);
-}
-
-void hideCursor(void) {
-	CONSOLE_CURSOR_INFO info;
-	info.dwSize = 100;
-	info.bVisible = FALSE;
-	SetConsoleCursorInfo(hStdout, &info);
-}
-
-void showCursor(void) {
-	CONSOLE_CURSOR_INFO info;
-	info.dwSize = 100;
-	info.bVisible = TRUE;
-	SetConsoleCursorInfo(hStdout, &info);
 }
 
 void SetConsoleWindowSize(int x, int y);
@@ -886,6 +751,14 @@ int EventsHandling(Table events, Table categories) {
 			}
 			break;
 		case VK_F9: // New event.
+			if (isEmptyVector(GetDataTable(categories))) {
+				system("cls");
+				hideCursor();
+				PrintToConsoleFormatted(CENTER_ALIGN | MIDDLE, "Mora postojati bar jedna kategorija događaja u evidenciji.");
+				getchar();
+				showCursor();
+				break;
+			}
 			NewEventScreen(events, categories);
 			break;
 		case VK_F10: // Sort the list.
@@ -936,7 +809,13 @@ int CategoriesHandling(Table table) {
 			system("cls");
 			PrintToConsole("Detalji");
 			break;
-		case VK_DELETE: // Delete selected event;
+		case VK_DELETE: // Delete selected event category;
+			if (isEmptyVector(GetDataTable(table))) {
+				break;
+			}
+			if (YesNoPrompt("Brisanje kategorije događaja", "Izbrisati odabranu kategoriju događaja?")) {
+				removeVector(GetDataTable(table), tableSelection);
+			}
 			break;
 		case VK_F9: // New event.
 			NewCategoryScreen(table);
@@ -1034,12 +913,16 @@ int main(void) {
 	SetHighAttrTable(categoriesTable, HIGHLIGHT_ATTRIBUTES);
 	SetToVectorFnTable(categoriesTable, EventCategoryToVector);
 	header = newVector();
-	string tmpString = copyString("Naziv kategorije");
-	addVector(header, tmpString);
+	for (int i = 0; i < 1; i++) {
+		string tmp = copyString(categoriesHeader[i]);
+		addVector(header, tmp);
+	}
 	SetHeaderTable(categoriesTable, header);
 	header = newVector();
-	tmpString = copyString(" TBD ");
-	addVector(header, tmpString);
+	for (int i = 0; i < 3; i++) {
+		string tmp = copyString(categoriesFooter[i]);
+		addVector(header, tmp);
+	}
 	SetFooterTable(categoriesTable, header);
 
 	// Variable for registering end.
