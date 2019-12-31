@@ -4,6 +4,12 @@
 #include <Windows.h>
 #include "cslib.h"
 
+enum FormatOption {
+	CENTER_ALIGN = 0x0001,
+	HIGHLIGHT = 0x0010,
+	MIDDLE = 0x0100
+};
+
 void ErrorExit(LPTSTR lpszFunction);
 
 int clear(int startY, int endY);
@@ -11,5 +17,7 @@ int clear(int startY, int endY);
 LPWSTR GetFormattedMessage(LPWSTR pMessage, ...);
 
 int PrintToConsole(const string format, ...);
+
+int PrintToConsoleFormatted(unsigned short options, const string format, ...);
 
 #endif // !_utilities_h

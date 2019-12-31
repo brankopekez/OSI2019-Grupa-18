@@ -137,3 +137,74 @@ int PrintToConsole(const string format, ...) {
 
 	return cWritten;
 }
+
+extern WORD HIGHLIGHT_ATTRIBUTES;
+
+int PrintToConsoleFormatted(unsigned short options, const string format, ...) {
+	WORD wOldColor;
+
+	va_list args;
+	va_start(args, format);
+	int len = _vscprintf(format, args) + 1;
+	string buf = newArray(len, char);
+	vsprintf(buf, format, args);
+
+	if (options & CENTER_ALIGN || options & MIDDLE) {
+		CONSOLE_SCREEN_BUFFER_INFO csbi;
+		COORD sizeConsole;
+		COORD cursorPosition;
+
+		// Get the current screen sb size and window position. 
+
+		if (!GetConsoleScreenBufferInfo(hStdout, &csbi)) {
+			freeBlock(buf);
+			return -1;
+		}
+		sizeConsole = csbi.dwSize;
+		cursorPosition = csbi.dwCursorPosition;
+		if (options & CENTER_ALIGN) {
+			cursorPosition.X = (sizeConsole.X - len) / 2;
+		}
+		if (options & MIDDLE) {
+			cursorPosition.Y = sizeConsole.Y / 2;
+		}
+		SetConsoleCursorPosition(hStdout, cursorPosition);
+	}
+	if (options & HIGHLIGHT) {
+		CONSOLE_SCREEN_BUFFER_INFO csbi;
+
+		// Save the current text colors. 
+		if (!GetConsoleScreenBufferInfo(hStdout, &csbi)) {
+			freeBlock(buf);
+			return -1;
+		}
+
+		wOldColor = csbi.wAttributes;
+
+		// Set the text attributes. 
+		if (!SetConsoleTextAttribute(hStdout, HIGHLIGHT_ATTRIBUTES)) {
+			freeBlock(buf);
+			return -1;
+		}
+	}
+
+	DWORD cWritten;
+	if (!WriteFile(
+		hStdout,               // output handle 
+		buf,                   // string buffer
+		lstrlenA(buf),         // string length 
+		&cWritten,             // bytes written 
+		NULL))                 // not overlapped 
+	{
+		freeBlock(buf);
+		return -1;
+	}
+	freeBlock(buf);
+
+	if (options & HIGHLIGHT) {
+		// Restore the original text colors. 
+		SetConsoleTextAttribute(hStdout, wOldColor);
+	}
+
+	return cWritten;
+}

@@ -18,7 +18,7 @@
 
 struct EventCategoryCDT
 {
-	/** @brief	The name of a category. */
+	/** @brief	The name of the category. */
 	string name;
 };
 

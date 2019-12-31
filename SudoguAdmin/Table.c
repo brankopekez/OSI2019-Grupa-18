@@ -17,14 +17,14 @@ struct TableCDT {
 	int endX;
 	int endY;
 	WORD highlightAttributes;
-	Vector columns;
 	Vector header;
 	Vector footer;
+	ToVector ToVectorFn;
 };
 
 Table NewTable(void) {
 	Table t = newBlock(Table);
-	t->data = NULL;
+	t->data = newVector();
 	t->startX = 0;
 
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -39,15 +39,16 @@ Table NewTable(void) {
 	t->startY = 0;
 	t->endY = windowSize.Y - 1;
 	t->highlightAttributes = 0;
-	t->columns = NULL;
-	t->header = NULL;
-	t->footer = NULL;
+	t->header = newVector();
+	t->footer = newVector();
+	t->ToVectorFn = NULL;
 	return t;
 }
 
 void FreeTable(Table t) {
 	freeVector(t->data);
-	freeVector(t->columns);
+	freeVector(t->header);
+	freeVector(t->footer);
 	freeBlock(t);
 }
 
@@ -99,14 +100,6 @@ void SetHighAttrTable(Table t, WORD attributes) {
 	t->highlightAttributes = attributes;
 }
 
-Vector GetColumnsTable(Table t) {
-	return t->columns;
-}
-
-void SetColumnsTable(Table t, Vector columns) {
-	t->columns = columns;
-}
-
 Vector GetHeaderTable(Table t) {
 	return t->header;
 }
@@ -133,6 +126,28 @@ int GetTableWidth(Table t) {
 
 int GetTotalTable(Table t) {
 	return sizeVector(t->data);
+}
+
+ToVector GetToVectorFnTable(Table t) {
+	return t->ToVectorFn;
+}
+
+void SetToVectorFnTable(Table t, ToVector fn) {
+	t->ToVectorFn = fn;
+}
+
+Table CloneTable(Table table) {
+	Table clonedTable = newBlock(Table);
+	clonedTable->data = cloneVector(table->data);
+	clonedTable->startX = table->startX;
+	clonedTable->startY = table->startY;
+	clonedTable->endX = table->endX;
+	clonedTable->endY = table->endY;
+	clonedTable->highlightAttributes = table->highlightAttributes;
+	clonedTable->header = cloneVector(table->header);
+	clonedTable->footer = cloneVector(table->footer);
+	clonedTable->ToVectorFn = table->ToVectorFn;
+	return clonedTable;
 }
 
 static string AlignCentre(string text, int width) {
@@ -167,9 +182,10 @@ static string AlignCentre(string text, int width) {
 	}
 }
 
-static void PrintRow(Table t, Vector columns) {
+static int PrintRow(Table t, Vector columns) {
 	int tableWidth = GetTableWidth(t);
 	int columnsCount = sizeVector(columns);
+	if (columnsCount == 0) return 1;
 	int width = (tableWidth - columnsCount - 1) / columnsCount;
 	StringBuffer row = newStringBuffer();
 
@@ -190,12 +206,13 @@ static void PrintRow(Table t, Vector columns) {
 	}
 
 	string strToPrint = copyString(getString(row));
-	PrintToConsole("%s", strToPrint);
+	int ret = PrintToConsole("%s", strToPrint);
 	freeBlock(strToPrint);
 	freeStringBuffer(row);
+	return ret;
 }
 
-static void PrintHighlightedRow(Table t, Vector columns) {
+static int PrintHighlightedRow(Table t, Vector columns) {
 	CONSOLE_SCREEN_BUFFER_INFO info;
 	WORD wOldColor;
 	WORD wAttributes = GetHighAttrTable(t);
@@ -212,13 +229,68 @@ static void PrintHighlightedRow(Table t, Vector columns) {
 		return 0;
 	}
 
-	PrintRow(t, columns);
+	int ret = PrintRow(t, columns);
 
 	// Restore the original text colors. 
 	SetConsoleTextAttribute(hStdout, wOldColor);
+
+	return ret;
+}
+
+static int PrintFooter(Table t, Vector columns) {
+	DWORD cCharsWritten;
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	COORD position;
+	DWORD dwConSize;
+	WORD wOldColor;
+	WORD wAttributes = GetHighAttrTable(t);
+
+	// Get the number of character cells in the current buffer. 
+	// 
+	if (!GetConsoleScreenBufferInfo(hStdout, &csbi)) {
+		return 0;
+	}
+
+	wOldColor = csbi.wAttributes;
+	dwConSize = csbi.dwSize.X;
+	position.X = 0;
+	position.Y = csbi.dwSize.Y - 1;
+
+	// Fill the title line with attributes.
+	// 
+	if (!FillConsoleOutputAttribute(hStdout,         // Handle to console screen buffer 
+		wAttributes,          // Character attributes to use
+		dwConSize,            // Number of cells to set attribute 
+		position,             // Coordinates of first cell 
+		&cCharsWritten))      // Receive number of characters written
+	{
+		return 0;
+	}
+
+	SetConsoleCursorPosition(hStdout, position);
+
+	// Set the text attributes. 
+	if (!SetConsoleTextAttribute(hStdout, wAttributes)) {
+		return 0;
+	}
+
+	int ret = PrintRow(t, columns);
+
+	// Restore the original text colors. 
+	SetConsoleTextAttribute(hStdout, wOldColor);
+
+	return 1;
 }
 
 static int DrawTable(Table table, int currentSelection, int startIndex) {
+	Vector data = GetDataTable(table);
+	Vector dataStringColumns = newVector();
+	ToVector fn = GetToVectorFnTable(table);
+	for (int i = 0; i < sizeVector(data); i++) {
+		void* record = getVector(data, i);
+		addVector(dataStringColumns, fn(record));
+	}
+
 	// Start line.
 	int startY = GetStartYTable(table);
 
@@ -247,10 +319,16 @@ static int DrawTable(Table table, int currentSelection, int startIndex) {
 	SetConsoleCursorPosition(hStdout, here);
 
 	// Print the header first.
-	PrintHighlightedRow(table, GetHeaderTable(table));
+	if (!PrintHighlightedRow(table, GetHeaderTable(table))) {
+		return 0;
+	}
 
 	// Increment Y coordinate for one because of the header.
 	++startY;
+
+	if (isEmptyVector(data)) {
+		PrintToConsoleFormatted(CENTER_ALIGN | MIDDLE, "Tabela nema podataka.");
+	}
 
 	for (int i = 0; i < tableHeight - 2 && startIndex + i < totalOptions; i++) {
 		here.Y = startY + i;
@@ -258,20 +336,26 @@ static int DrawTable(Table table, int currentSelection, int startIndex) {
 		SetConsoleCursorPosition(hStdout, here);
 
 		if (startIndex + i == currentSelection) {
-			PrintHighlightedRow(table, getVector(GetColumnsTable(table), startIndex + i));
+			if (!PrintHighlightedRow(table, getVector(dataStringColumns, startIndex + i))) {
+				return 0;
+			}
 		}
 		else {
-			PrintRow(table, getVector(GetColumnsTable(table), startIndex + i));
+			if (!PrintRow(table, getVector(dataStringColumns, startIndex + i))) {
+				return 0;
+			}
 		}
 	}
 
 	// Print the footer.
-	PrintHighlightedRow(table, GetFooterTable(table));
+	if (!PrintFooter(table, GetFooterTable(table))) {
+		return 0;
+	}
 
 	return 1;
 }
 
-int MainTable(Table table, int* selection) {
+int MainTable(Table table, int* selection, WORD* keyCode) {
 	// Hide the cursor inside the table.
 	CONSOLE_CURSOR_INFO info;
 	info.dwSize = 100;
@@ -332,6 +416,8 @@ int MainTable(Table table, int* selection) {
 
 	// Loop for showing the menu, until done.
 	while (!done) {
+		// Using system("cls") does not produce as much flickering as does clear(startY, endY).
+		// 
 		//if (!clear(startY, endY)) {
 		//	return 0;
 		//}
@@ -364,10 +450,8 @@ int MainTable(Table table, int* selection) {
 						}
 					}
 					break;
-				case VK_RETURN:
-					done = TRUE;
-					break;
 				default:
+					done = TRUE;
 					break;
 				}
 		}
@@ -381,5 +465,6 @@ int MainTable(Table table, int* selection) {
 	SetConsoleCursorInfo(hStdout, &info);
 
 	*selection = currentSelection;
+	*keyCode = event.Event.KeyEvent.wVirtualKeyCode;
 	return 1;
 }

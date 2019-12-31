@@ -6,6 +6,8 @@
 
 typedef struct TableCDT* Table;
 
+typedef Vector(*ToVector)(void*);
+
 Table NewTable(void);
 
 void FreeTable(Table t);
@@ -34,10 +36,6 @@ WORD GetHighAttrTable(Table t);
 
 void SetHighAttrTable(Table t, WORD attributes);
 
-Vector GetColumnsTable(Table t);
-
-void SetColumnsTable(Table t, Vector columns);
-
 Vector GetHeaderTable(Table t);
 
 void SetHeaderTable(Table t, Vector header);
@@ -52,6 +50,12 @@ int GetTableWidth(Table t);
 
 int GetTotalTable(Table t);
 
-int MainTable(Table table, int* selection);
+ToVector GetToVectorFnTable(Table t);
+
+void SetToVectorFnTable(Table t, ToVector fn);
+
+Table CloneTable(Table table);
+
+int MainTable(Table table, int* selection, WORD* keyCode);
 
 #endif // !_table_h

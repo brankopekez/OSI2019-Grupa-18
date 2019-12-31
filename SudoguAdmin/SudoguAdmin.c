@@ -82,6 +82,12 @@ string menuOptions[] = {
 	"Izlaz"
 };
 
+enum M_MENU {
+	EVENT_HANDLING,
+	CATEGORY_HANDLING,
+	LOGOUT,
+	EXIT
+};
 
 /** @brief	The events table header (column names). */
 string eventsHeader[] = {
@@ -91,14 +97,13 @@ string eventsHeader[] = {
 	"Datum i vrijeme"
 };
 
-
 /** @brief	The events table footer. */
 string eventsFooter[] = {
 	"ESC: Izlaz.",
 	"RETURN: Detalji.",
 	"DELETE: Obriši.",
-	"F10: Novi događaj.",
-	"F9: Sortiraj listu."
+	"F9: Novi događaj.",
+	"F10: Sortiraj listu."
 };
 
 /** @brief	Global variable for accounts config filename */
@@ -626,13 +631,331 @@ void SetConsoleWindowSize(int x, int y);
 
 void windowSetup(void);
 
+Vector EventToVector(Event event) {
+	Vector vector = newVector();
+	addVector(vector, getEventName(event));
+	addVector(vector, getEventLocation(event));
+	addVector(vector, getEventCategory(event));
+
+	struct tm newtime;
+	char buff[BUFSIZ];
+	time_t long_time = getEventTime(event);
+	errno_t err;
+
+	// Convert to local time.
+	err = localtime_s(&newtime, &long_time);
+	if (err) {
+		return NULL;
+	}
+
+	if (!strftime(buff, sizeof buff, "%A %x %R", &newtime)) {
+		return NULL;
+	}
+
+	string tmp = copyString(buff);
+	addVector(vector, tmp);
+
+	return vector;
+}
+
+Vector EventCategoryToVector(EventCategory category) {
+	Vector vector = newVector();
+	addVector(vector, getEventCategoryName(category));
+	return vector;
+}
+
+void PrintTitle(const string title) {
+	COORD coordScreen = { 0, 0 };    // home for the cursor 
+	DWORD cCharsWritten;
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	DWORD dwConSize;
+
+	// Get the number of character cells in the current buffer. 
+	// 
+	if (!GetConsoleScreenBufferInfo(hStdout, &csbi)) {
+		return;
+	}
+
+	dwConSize = csbi.dwSize.X;
+
+	// Fill the title line with attributes.
+	// 
+	if (!FillConsoleOutputAttribute(hStdout,         // Handle to console screen buffer 
+		HIGHLIGHT_ATTRIBUTES, // Character attributes to use
+		dwConSize,            // Number of cells to set attribute 
+		coordScreen,          // Coordinates of first cell 
+		&cCharsWritten))      // Receive number of characters written
+	{
+		return;
+	}
+
+	PrintToConsoleFormatted(CENTER_ALIGN | HIGHLIGHT, title);
+	++coordScreen.Y;
+	SetConsoleCursorPosition(hStdout, coordScreen);
+}
+
+void PrintStatusLine(const string format) {
+	DWORD cCharsWritten;
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	COORD position;
+	DWORD dwConSize;
+
+	// Get the number of character cells in the current buffer. 
+	// 
+	if (!GetConsoleScreenBufferInfo(hStdout, &csbi)) {
+		return;
+	}
+
+	dwConSize = csbi.dwSize.X;
+	position.X = 0;
+	position.Y = csbi.dwSize.Y - 1;
+	SetConsoleCursorPosition(hStdout, position);
+
+	// Fill the title line with attributes.
+	// 
+	if (!FillConsoleOutputAttribute(hStdout,         // Handle to console screen buffer 
+		HIGHLIGHT_ATTRIBUTES, // Character attributes to use
+		dwConSize,            // Number of cells to set attribute 
+		position,          // Coordinates of first cell 
+		&cCharsWritten))      // Receive number of characters written
+	{
+		return;
+	}
+
+	PrintToConsoleFormatted(HIGHLIGHT, format);
+
+	SetConsoleCursorPosition(hStdout, position);
+}
+
+int YesNoPrompt(const string title, const string format, ...) {
+	// Hide the cursor inside the table.
+	CONSOLE_CURSOR_INFO info;
+	info.dwSize = 100;
+	info.bVisible = FALSE;
+	SetConsoleCursorInfo(hStdout, &info);
+
+	va_list args;
+	va_start(args, format);
+	int len = _vscprintf(format, args) + 1;
+	string buf = newArray(len, char);
+	vsprintf(buf, format, args);
+
+	system("cls");
+
+	PrintTitle(title);
+	PrintStatusLine(" F9: Da. | F10: Ne.");
+
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	COORD sizeConsole;
+	COORD cursorPosition;
+
+	// Get the current screen sb size and window position. 
+
+	if (!GetConsoleScreenBufferInfo(hStdout, &csbi)) {
+		freeBlock(buf);
+		return -1;
+	}
+	sizeConsole = csbi.dwSize;
+	cursorPosition.X = 0;
+	cursorPosition.Y = (sizeConsole.Y - 3) / 2;
+	SetConsoleCursorPosition(hStdout, cursorPosition);
+	PrintToConsoleFormatted(CENTER_ALIGN, buf);
+
+	// Variable for registering end.
+	BOOL done = FALSE;
+
+	// Registered event that has happend.
+	INPUT_RECORD event;
+
+	// Number of read characters.
+	DWORD cRead;
+
+	// Keeping track of the current option selection.
+	int selection = 0;
+
+	while (!done) {
+		system("pause>nul");
+		if (WaitForSingleObject(hStdin, INFINITE) == WAIT_OBJECT_0)  /* if kbhit */
+		{
+			/* Get the input event */
+			ReadConsoleInput(hStdin, &event, 1, &cRead);
+
+			/* Only respond to key release events */
+			if (event.EventType == KEY_EVENT)
+				switch (event.Event.KeyEvent.wVirtualKeyCode) {
+				case VK_F9:
+					selection = 1;
+					done = TRUE;
+					break;
+				case VK_F10:
+					selection = 0;
+					done = TRUE;
+					break;
+				default:
+					break;
+				}
+		}
+	}
+
+	// Show the cursor.
+	info.bVisible = TRUE;
+	SetConsoleCursorInfo(hStdout, &info);
+
+	return selection;
+}
+
+int NewEventScreen(Table events, Table categories) {
+	string title = "Unos novog događaja";
+	system("cls");
+	PrintTitle(title);
+	advanceCursor(3);
+	PrintToConsole("\tNaziv događaja: ");
+	string eventName = readLine(stdin);
+	PrintToConsole("\tLokacija: ");
+	string eventLocation = readLine(stdin);
+	string categoryName;
+
+	Table cpyTable = CloneTable(categories);
+
+	// Variable for registering end.
+	BOOL done = FALSE;
+
+	// Selected index inside the table.
+	int tableSelection;
+
+	// Key code that was registered inside the table.
+	WORD registeredKeyCode;
+
+	while (!done) {
+		if (!MainTable(cpyTable, &tableSelection, &registeredKeyCode)) {
+			return 0;
+		}
+		switch (registeredKeyCode) {
+		case VK_ESCAPE:
+			tableSelection = -1;
+			done = TRUE;
+			break;
+		case VK_RETURN:
+			done = TRUE;
+			break;
+		default:
+			break;
+		}
+	}
+	EventCategory chosenCategory = getVector(GetDataTable(categories), tableSelection);
+	categoryName = getEventCategoryName(chosenCategory);
+	Event temp = newEvent();
+	setEventName(temp, eventName);
+	setEventLocation(temp, eventLocation);
+	setEventCategory(temp, categoryName);
+
+	Vector eventsVector = GetDataTable(events);
+	addVector(eventsVector, temp);
+	return 1;
+}
+
+int EventsHandling(Table events, Table categories) {
+
+	// Variable for registering end.
+	BOOL done = FALSE;
+
+	// Selected index inside the table.
+	int tableSelection;
+
+	// Key code that was registered inside the table.
+	WORD registeredKeyCode;
+
+	while (!done) {
+		if (!MainTable(events, &tableSelection, &registeredKeyCode)) {
+			return 0;
+		}
+		switch (registeredKeyCode) {
+		case VK_ESCAPE: // Exit from table.
+			done = TRUE;
+			break;
+		case VK_RETURN: // Show details of the selected event.
+			system("cls");
+			PrintToConsole("Detalji");
+			break;
+		case VK_DELETE: // Delete selected event;
+			if (isEmptyVector(GetDataTable(events))) {
+				break;
+			}
+			if (YesNoPrompt("Brisanje događaja", "Izbrisati odabrani događaj?")) {
+				removeVector(GetDataTable(events), tableSelection);
+			}
+			break;
+		case VK_F9: // New event.
+			NewEventScreen(events, categories);
+			break;
+		case VK_F10: // Sort the list.
+			break;
+		default:
+			break;
+		}
+	}
+	return 1;
+}
+
+void NewCategoryScreen(Table table) {
+	string title = "Unos nove kategorije događaja";
+	system("cls");
+	PrintTitle(title);
+	advanceCursor(3);
+	PrintToConsole("\tNaziv nove kategorije događaja: ");
+
+	string categoryName = readLine(stdin);
+
+	EventCategory cat = newEventCategory();
+	setEventCategoryName(cat, categoryName);
+
+	Vector categories = GetDataTable(table);
+	addVector(categories, cat);
+}
+
+int CategoriesHandling(Table table) {
+
+	// Variable for registering end.
+	BOOL done = FALSE;
+
+	// Selected index inside the table.
+	int tableSelection;
+
+	// Key code that was registered inside the table.
+	WORD registeredKeyCode;
+
+	while (!done) {
+		if (!MainTable(table, &tableSelection, &registeredKeyCode)) {
+			return 0;
+		}
+		switch (registeredKeyCode) {
+		case VK_ESCAPE: // Exit from table.
+			done = TRUE;
+			break;
+		case VK_RETURN: // Show details of the selected event.
+			system("cls");
+			PrintToConsole("Detalji");
+			break;
+		case VK_DELETE: // Delete selected event;
+			break;
+		case VK_F9: // New event.
+			NewCategoryScreen(table);
+			break;
+		case VK_F10: // Sort the list.
+			break;
+		default:
+			break;
+		}
+	}
+	return 1;
+}
+
 int main(void) {
-	int menuOption;
 	windowSetup();
 	Vector events = newVector();
 	Event e;
-
-	for (int i = 0; i < 45; i++) {
+	
+	/*for (int i = 0; i < 45; i++) {
 		e = newEvent();
 		StringBuffer sb = newStringBuffer();
 		appendString(sb, "name");
@@ -648,7 +971,7 @@ int main(void) {
 		setEventTime(e, long_time);
 		addVector(events, e);
 	}
-
+	*/
 	Menu menu = newMenu();
 	Vector menuVector = getMenuOptions(menu);
 	freeVector(menuVector);
@@ -657,9 +980,10 @@ int main(void) {
 	centerMenu(menu);
 	setHighlightAttributes(menu, HIGHLIGHT_ATTRIBUTES);
 
+
 	Table eventsTable = NewTable();
 	SetDataTable(eventsTable, events);
-	Vector columns = newVector();
+	/*Vector columns = newVector();
 	for (int i = 0; i < 45; i++) {
 		Vector record = newVector();
 		addVector(record, getEventName(getVector(events, i)));
@@ -682,13 +1006,13 @@ int main(void) {
 		}
 
 		string tmp = copyString(buff);
-		
+
 		addVector(record, tmp);
-		
+
 		addVector(columns, record);
 	}
 	SetColumnsTable(eventsTable, columns);
-
+	*/
 	Vector header = newVector();
 	for (int i = 0; i < 4; i++) {
 		string tmp = copyString(eventsHeader[i]);
@@ -701,47 +1025,62 @@ int main(void) {
 		addVector(header, tmp);
 	}
 	SetFooterTable(eventsTable, header);
-
+	
 	SetHighAttrTable(eventsTable, HIGHLIGHT_ATTRIBUTES);
+	SetToVectorFnTable(eventsTable, EventToVector);
 
-	int tableSelection;
 
-	while (true) {
+	Table categoriesTable = NewTable();
+	SetHighAttrTable(categoriesTable, HIGHLIGHT_ATTRIBUTES);
+	SetToVectorFnTable(categoriesTable, EventCategoryToVector);
+	header = newVector();
+	string tmpString = copyString("Naziv kategorije");
+	addVector(header, tmpString);
+	SetHeaderTable(categoriesTable, header);
+	header = newVector();
+	tmpString = copyString(" TBD ");
+	addVector(header, tmpString);
+	SetFooterTable(categoriesTable, header);
+
+	// Variable for registering end.
+	BOOL done = FALSE;
+
+	// Variable for registering when a user has logged out.
+	BOOL loggedOut = FALSE;
+
+	// Selected option inside the main menu.
+	int menuOption;
+
+	while (!done) {
 		login();
-		if (!mainMenu(menu, &menuOption)) {
-			error_msg("mainMenu");
+		loggedOut = FALSE;
+		while (!loggedOut && !done) {
+			system("cls");
+			if (!mainMenu(menu, &menuOption)) {
+				error_msg("mainMenu");
+			}
+			switch (menuOption) {
+			case EVENT_HANDLING:
+				if (!EventsHandling(eventsTable, categoriesTable)) {
+					error_msg("EventsHandling");
+				}
+				break;
+			case CATEGORY_HANDLING:
+				if (!CategoriesHandling(categoriesTable)) {
+					error_msg("CategoriesHandling");
+				}
+				break;
+			case LOGOUT:
+				logout();
+				loggedOut = TRUE;
+				break;
+			case EXIT:
+				done = TRUE;
+				break;
+			default:
+				break;
+			}
 		}
-		switch (menuOption) {
-		case 0:
-			MainTable(eventsTable, &tableSelection);
-			break;
-		case 1:
-
-			break;
-		case 2:
-			logout();
-			break;
-		case 3:
-			// Restore the original console mode. 
-			SetConsoleMode(hStdin, fdwSaveOldMode);
-
-			// Restore the original text colors. 
-			SetConsoleTextAttribute(hStdout, wOldColorAttrs);
-
-			return 0;
-		default:
-			break;
-		}
-		Map cityMap = newMap();
-		if (fileToMap(fileCity, cityMap) != 1) {
-			fprintf(stderr, "Neispravna konfiguracija parametara grada unutar datoteke %s.\n", fileCity);
-			freeMapFields(cityMap);
-		}
-		else {
-			string cityName = getMap(cityMap, "name");
-			printf("Naziv grada: %s.\n", cityName);
-		}
-		logout();
 	}
 
 	// Restore the original console mode. 
@@ -755,6 +1094,9 @@ int main(void) {
 
 void windowSetup(void) {
 	// Set codepage. Needed for Serbian Latin chars.
+	// Also added additional options in project property pages:
+	// /source-charset:windows-1250 /execution-charset:windows-1250
+	// 
 	if (!SetConsoleCP(1250)) {
 		error_msg("SetConsoleCP");
 	}
@@ -763,6 +1105,8 @@ void windowSetup(void) {
 	}
 
 	// Set system locale.
+	// Serbian Latin (Bosnia and Herzegowina)
+	// 
 	setlocale(LC_ALL, "sr-Latn-BA");
 
 	// Set time zone from TZ environment variable. If TZ is not set,
@@ -772,11 +1116,13 @@ void windowSetup(void) {
 	_tzset();
 
 	// Disable window resizing and maximizing.
+	// 
 	HWND consoleWindow = GetConsoleWindow();
 	SetWindowLong(consoleWindow, GWL_STYLE, GetWindowLong(consoleWindow, GWL_STYLE) & ~WS_MAXIMIZEBOX & ~WS_SIZEBOX);
 	SetConsoleWindowSize(windowSizeX, windowSizeY);
 
 	// Get handles to STDIN and STDOUT.
+	// 
 	hStdin = GetStdHandle(STD_INPUT_HANDLE);
 	hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (hStdin == INVALID_HANDLE_VALUE || hStdout == INVALID_HANDLE_VALUE) {
@@ -785,12 +1131,14 @@ void windowSetup(void) {
 	}
 
 	// Save the current input mode, to be restored on exit.
+	// 
 	if (!GetConsoleMode(hStdin, &fdwSaveOldMode)) {
 		MessageBox(NULL, TEXT("GetConsoleMode"), TEXT("Console Error"), MB_OK);
 		exit(EXIT_FAILURE);
 	}
 
 	// Save the current text colors.
+	// 
 	if (!GetConsoleScreenBufferInfo(hStdout, &csbiInfo)) {
 		MessageBox(NULL, TEXT("GetConsoleScreenBufferInfo"), TEXT("Console Error"), MB_OK);
 		exit(EXIT_FAILURE);
@@ -799,15 +1147,18 @@ void windowSetup(void) {
 	wOldColorAttrs = csbiInfo.wAttributes;
 
 	// Set text attributes.
+	// 
 	if (!SetConsoleTextAttribute(hStdout, B_WHITE)) {
 		MessageBox(NULL, TEXT("SetConsoleTextAttribute"), TEXT("Console Error"), MB_OK);
 		exit(EXIT_FAILURE);
 	}
 
 	// Show cursor.
+	// 
 	showCursor();
 
 	// Clear screen.
+	// 
 	system("cls");
 }
 
