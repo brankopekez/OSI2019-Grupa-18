@@ -10,7 +10,7 @@ enum FormatOption {
 	MIDDLE = 0x0100
 };
 
-void ErrorExit(LPTSTR lpszFunction);
+void ErrorExit(LPSTR lpszFunction);
 
 int clear(int startY, int endY);
 

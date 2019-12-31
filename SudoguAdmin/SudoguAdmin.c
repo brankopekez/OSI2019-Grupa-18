@@ -151,26 +151,13 @@ WORD HIGHLIGHT_ATTRIBUTES = F_RED | B_WHITE | COMMON_LVB_REVERSE_VIDEO;
 const int windowSizeX = 121;
 const int windowSizeY = 33;
 
-void error_msg(const char* format, ...) {
+void error_msg(const string format, ...) {
 	va_list args;
-	fprintf(stderr, "[%s] ERROR: ", programName);
-	if (format != NULL) {
-		va_start(args, format);
-		vfprintf(stderr, format, args);
-		va_end(args);
-	}
-	if (errno != 0) {
-		fprintf(stderr, ": %s\n", strerror(errno));
-	}
-	putc('\n', stderr);
-
-	// Restore input mode on exit.
-	SetConsoleMode(hStdin, fdwSaveOldMode);
-
-	// Restore the original text colors. 
-	SetConsoleTextAttribute(hStdout, wOldColorAttrs);
-
-	exit(EXIT_FAILURE);
+	va_start(args, format);
+	int len = _vscprintf(format, args) + 1;
+	string buf = newArray(len, char);
+	vsprintf(buf, format, args);
+	ErrorExit(buf);
 }
 
 
@@ -370,10 +357,12 @@ void PrintLogo(void) {
 	// 38
 	COORD cursorPosition = { 0, 4 };
 	SetConsoleCursorPosition(hStdout, cursorPosition);
+	HIGHLIGHT_ATTRIBUTES = F_RED | B_WHITE;
 	for (int i = 0; i < 6; i++) {
-		PrintToConsoleFormatted(CENTER_ALIGN, logo[i]);
+		PrintToConsoleFormatted(CENTER_ALIGN | HIGHLIGHT, logo[i]);
 		advanceCursor(1);
 	}
+	HIGHLIGHT_ATTRIBUTES = F_RED | B_WHITE | COMMON_LVB_REVERSE_VIDEO;
 	//advanceCursor(1);
 	//PrintToConsoleFormatted(CENTER_ALIGN, "Sistem upravljanja događajima");
 }
@@ -540,10 +529,19 @@ Vector EventToVector(Event event) {
 	return vector;
 }
 
+void FreeEventStringVector(Vector vector) {
+	freeBlock(getVector(vector, 3)); //todo:magic num
+	freeVector(vector);
+}
+
 Vector EventCategoryToVector(EventCategory category) {
 	Vector vector = newVector();
 	addVector(vector, getEventCategoryName(category));
 	return vector;
+}
+
+void FreeEventCategoryStringVector(Vector vector) {
+	freeVector(vector);
 }
 
 void PrintTitle(const string title) {
@@ -686,6 +684,91 @@ int YesNoPrompt(const string title, const string format, ...) {
 	return selection;
 }
 
+CHAR_INFO* SaveScreenBuffer(void) {
+	CHAR_INFO* chiBuffer;
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	SMALL_RECT srctRect;
+	COORD coordBufSize;
+	COORD coordBufCoord;
+	BOOL fSuccess;
+
+	// Get the console screen buffer info. 
+	if (!GetConsoleScreenBufferInfo(hStdout, &csbi)) {
+		return NULL;
+	}
+
+	coordBufSize = csbi.dwSize;
+
+	chiBuffer = newArray(coordBufSize.X * coordBufSize.Y, CHAR_INFO);
+
+	// Set the source rectangle.
+
+	srctRect.Top = 0;
+	srctRect.Left = 0;
+	srctRect.Bottom = coordBufSize.Y - 1;
+	srctRect.Right = coordBufSize.X - 1;
+
+	// The top left destination cell of the temporary buffer is 
+	// row 0, col 0. 
+
+	coordBufCoord.X = 0;
+	coordBufCoord.Y = 0;
+
+	// Copy the block from the screen buffer to the temp. buffer. 
+
+	fSuccess = ReadConsoleOutput(
+		hStdout,        // screen buffer to read from 
+		chiBuffer,      // buffer to copy into 
+		coordBufSize,   // col-row size of chiBuffer 
+		coordBufCoord,  // top left dest. cell in chiBuffer 
+		&srctRect); // screen buffer source rectangle 
+	if (!fSuccess) {
+		return NULL;
+	}
+	return chiBuffer;
+}
+
+int RecoverScreenBuffer(CHAR_INFO* chiBuffer) {
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	SMALL_RECT srctRect;
+	COORD coordBufSize;
+	COORD coordBufCoord;
+	BOOL fSuccess;
+
+	// Get the console screen buffer info. 
+	if (!GetConsoleScreenBufferInfo(hStdout, &csbi)) {
+		return 0;
+	}
+
+	coordBufSize = csbi.dwSize;
+
+	// Set the destination rectangle. 
+
+	srctRect.Top = 0;
+	srctRect.Left = 0;
+	srctRect.Bottom = coordBufSize.Y - 1;
+	srctRect.Right = coordBufSize.X - 1;
+
+	// The top left destination cell of the temporary buffer is 
+	// row 0, col 0. 
+
+	coordBufCoord.X = 0;
+	coordBufCoord.Y = 0;
+
+	// Copy from the temporary buffer to the new screen buffer. 
+
+	fSuccess = WriteConsoleOutput(
+		hStdout, // screen buffer to write to 
+		chiBuffer,        // buffer to copy from 
+		coordBufSize,     // col-row size of chiBuffer 
+		coordBufCoord,    // top left src cell in chiBuffer 
+		&srctRect);  // dest. screen buffer rectangle 
+	if (!fSuccess) {
+		return 0;
+	}
+	return 1;
+}
+
 int NewEventScreen(Table events, Table categories) {
 	string title = "Unos novog događaja";
 	system("cls");
@@ -695,7 +778,32 @@ int NewEventScreen(Table events, Table categories) {
 	string eventName = readLine(stdin);
 	PrintToConsole("\tLokacija: ");
 	string eventLocation = readLine(stdin);
+	PrintToConsole("\tDatum i vrijeme (format mora biti u obliku \"dan.mjesec.godina sati:minuta\"): ");
+	int day, month, year, hour, minute;
+	scanf("%d.%d.%d %d:%d", &day, &month, &year, &hour, &minute);
+	time_t eventTime;
+	time(&eventTime);
+	struct tm dateTime = {
+		.tm_mday = day,
+		.tm_mon = month - 1,
+		.tm_year = year - 1900,
+		.tm_hour = hour,
+		.tm_min = minute,
+		.tm_isdst = localtime(&eventTime)->tm_isdst
+	};
+	eventTime = mktime(&dateTime);
+
 	string categoryName;
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	COORD oldCordinates; // Save original coordinates.
+
+	// Get the console screen buffer info. 
+	if (!GetConsoleScreenBufferInfo(hStdout, &csbi)) {
+		return 0;
+	}
+	oldCordinates = csbi.dwCursorPosition;
+
+	CHAR_INFO* chiBuffer = SaveScreenBuffer();
 
 	Table cpyTable = CloneTable(categories);
 
@@ -703,7 +811,7 @@ int NewEventScreen(Table events, Table categories) {
 	BOOL done = FALSE;
 
 	// Selected index inside the table.
-	int tableSelection;
+	int tableSelection = 0;
 
 	// Key code that was registered inside the table.
 	WORD registeredKeyCode;
@@ -713,10 +821,6 @@ int NewEventScreen(Table events, Table categories) {
 			return 0;
 		}
 		switch (registeredKeyCode) {
-		case VK_ESCAPE:
-			tableSelection = -1;
-			done = TRUE;
-			break;
 		case VK_RETURN:
 			done = TRUE;
 			break;
@@ -726,13 +830,26 @@ int NewEventScreen(Table events, Table categories) {
 	}
 	EventCategory chosenCategory = getVector(GetDataTable(categories), tableSelection);
 	categoryName = getEventCategoryName(chosenCategory);
+
+	RecoverScreenBuffer(chiBuffer);
+	SetConsoleCursorPosition(hStdout, oldCordinates);
+
+	PrintToConsole("\tKategorija: %s\n", categoryName);
+
+	PrintToConsole("\tOpis: ");
+	string eventDescription = readLine(stdin);
+
 	Event temp = newEvent();
 	setEventName(temp, eventName);
 	setEventLocation(temp, eventLocation);
+	setEventTime(temp, eventTime);
 	setEventCategory(temp, categoryName);
+	setEventDescription(temp, eventDescription);
 
 	Vector eventsVector = GetDataTable(events);
 	addVector(eventsVector, temp);
+
+	FreeTable(cpyTable);
 	return 1;
 }
 
@@ -742,7 +859,7 @@ int EventsHandling(Table events, Table categories) {
 	BOOL done = FALSE;
 
 	// Selected index inside the table.
-	int tableSelection;
+	int tableSelection = 0;
 
 	// Key code that was registered inside the table.
 	WORD registeredKeyCode;
@@ -766,13 +883,14 @@ int EventsHandling(Table events, Table categories) {
 			if (YesNoPrompt("Brisanje događaja", "Izbrisati odabrani događaj?")) {
 				removeVector(GetDataTable(events), tableSelection);
 			}
+			tableSelection = 0;
 			break;
 		case VK_F9: // New event.
 			if (isEmptyVector(GetDataTable(categories))) {
 				system("cls");
 				hideCursor();
 				PrintToConsoleFormatted(CENTER_ALIGN | MIDDLE, "Mora postojati bar jedna kategorija događaja u evidenciji.");
-				getchar();
+				system("pause>nul");
 				showCursor();
 				break;
 			}
@@ -809,7 +927,7 @@ int CategoriesHandling(Table table) {
 	BOOL done = FALSE;
 
 	// Selected index inside the table.
-	int tableSelection;
+	int tableSelection = 0;
 
 	// Key code that was registered inside the table.
 	WORD registeredKeyCode;
@@ -833,6 +951,7 @@ int CategoriesHandling(Table table) {
 			if (YesNoPrompt("Brisanje kategorije događaja", "Izbrisati odabranu kategoriju događaja?")) {
 				removeVector(GetDataTable(table), tableSelection);
 			}
+			tableSelection = 0;
 			break;
 		case VK_F9: // New event.
 			NewCategoryScreen(table);
@@ -866,8 +985,8 @@ int main(void) {
 		long_time += 10000 * i;
 		setEventTime(e, long_time);
 		addVector(events, e);
-	}
-	*/
+	}*/
+
 	Menu menu = newMenu();
 	Vector menuVector = getMenuOptions(menu);
 	freeVector(menuVector);
@@ -923,12 +1042,14 @@ int main(void) {
 	SetFooterTable(eventsTable, header);
 
 	SetHighAttrTable(eventsTable, HIGHLIGHT_ATTRIBUTES);
-	SetToVectorFnTable(eventsTable, EventToVector);
+	SetToStringVectorFnTable(eventsTable, EventToVector);
+	SetFreeStringVectorFnTable(eventsTable, FreeEventStringVector);
 
 
 	Table categoriesTable = NewTable();
 	SetHighAttrTable(categoriesTable, HIGHLIGHT_ATTRIBUTES);
-	SetToVectorFnTable(categoriesTable, EventCategoryToVector);
+	SetToStringVectorFnTable(categoriesTable, EventCategoryToVector);
+	SetFreeStringVectorFnTable(categoriesTable, FreeEventCategoryStringVector);
 	header = newVector();
 	for (int i = 0; i < 1; i++) {
 		string tmp = copyString(categoriesHeader[i]);

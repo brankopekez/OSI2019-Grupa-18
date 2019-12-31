@@ -19,7 +19,8 @@ struct TableCDT {
 	WORD highlightAttributes;
 	Vector header;
 	Vector footer;
-	ToVector ToVectorFn;
+	ToStringVector ToStringVectorFn;
+	FreeStringVector FreeStringVectorFn;
 };
 
 Table NewTable(void) {
@@ -41,7 +42,8 @@ Table NewTable(void) {
 	t->highlightAttributes = 0;
 	t->header = newVector();
 	t->footer = newVector();
-	t->ToVectorFn = NULL;
+	t->ToStringVectorFn = NULL;
+	t->FreeStringVectorFn = NULL;
 	return t;
 }
 
@@ -128,12 +130,20 @@ int GetTotalTable(Table t) {
 	return sizeVector(t->data);
 }
 
-ToVector GetToVectorFnTable(Table t) {
-	return t->ToVectorFn;
+ToStringVector GetToStringVectorFnTable(Table t) {
+	return t->ToStringVectorFn;
 }
 
-void SetToVectorFnTable(Table t, ToVector fn) {
-	t->ToVectorFn = fn;
+void SetToStringVectorFnTable(Table t, ToStringVector fn) {
+	t->ToStringVectorFn = fn;
+}
+
+FreeStringVector GetFreeStringVectorFnTable(Table t) {
+	return t->FreeStringVectorFn;
+}
+
+void SetFreeStringVectorFnTable(Table t, FreeStringVector fn) {
+	t->FreeStringVectorFn = fn;
 }
 
 Table CloneTable(Table table) {
@@ -146,7 +156,8 @@ Table CloneTable(Table table) {
 	clonedTable->highlightAttributes = table->highlightAttributes;
 	clonedTable->header = cloneVector(table->header);
 	clonedTable->footer = cloneVector(table->footer);
-	clonedTable->ToVectorFn = table->ToVectorFn;
+	clonedTable->ToStringVectorFn = table->ToStringVectorFn;
+	clonedTable->FreeStringVectorFn = table->FreeStringVectorFn;
 	return clonedTable;
 }
 
@@ -285,10 +296,10 @@ static int PrintFooter(Table t, Vector columns) {
 static int DrawTable(Table table, int currentSelection, int startIndex) {
 	Vector data = GetDataTable(table);
 	Vector dataStringColumns = newVector();
-	ToVector fn = GetToVectorFnTable(table);
+	ToStringVector ToFn = GetToStringVectorFnTable(table);
 	for (int i = 0; i < sizeVector(data); i++) {
 		void* record = getVector(data, i);
-		addVector(dataStringColumns, fn(record));
+		addVector(dataStringColumns, ToFn(record));
 	}
 
 	// Start line.
@@ -352,6 +363,14 @@ static int DrawTable(Table table, int currentSelection, int startIndex) {
 		return 0;
 	}
 
+	// Clean up.
+	FreeStringVector FreeFn = GetFreeStringVectorFnTable(table);
+	for (int i = 0; i < sizeVector(dataStringColumns); i++) {
+		Vector record = getVector(dataStringColumns, i);
+		FreeFn(record);
+	}
+	freeVector(dataStringColumns);
+
 	return 1;
 }
 
@@ -385,7 +404,7 @@ int MainTable(Table table, int* selection, WORD* keyCode) {
 	BOOL done = FALSE;
 
 	// Keeping track of the current option selection inside the table.
-	int currentSelection = 0;
+	int currentSelection = *selection;
 
 	// Total number of options inside the table.
 	int totalOptions = GetTotalTable(table);
@@ -402,11 +421,16 @@ int MainTable(Table table, int* selection, WORD* keyCode) {
 	// End console column.
 	int endX = GetEndXTable(table);
 
-	// Index of an element that lies on the top of the shown table.
-	int startIndex = 0;
-
 	// Table height.
 	int tableHeight = GetTableHeight(table);
+
+	// Index of an element that lies on the top of the shown table.
+	int startIndex = currentSelection - (tableHeight - 3); // Three is for header, footer and current selection.
+
+	// In case the startIndex is not valid.
+	if (startIndex < 0) {
+		startIndex = 0;
+	}
 
 	// Registered event that has happend.
 	INPUT_RECORD event;

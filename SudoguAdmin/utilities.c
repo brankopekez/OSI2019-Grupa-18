@@ -10,38 +10,49 @@
 extern HANDLE hStdout;
 extern HANDLE hStdin;
 
-void ErrorExit(LPTSTR lpszFunction) {
+void ErrorExit(LPSTR lpszFunction) {
 	// Retrieve the system error message for the last-error code
 
-	LPVOID lpMsgBuf;
-	LPVOID lpDisplayBuf;
+	LPVOID lpMsgBuf = NULL;
+	LPVOID lpDisplayBuf = NULL;
 	DWORD dw = GetLastError();
 
-	FormatMessage(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER |
-		FORMAT_MESSAGE_FROM_SYSTEM |
-		FORMAT_MESSAGE_IGNORE_INSERTS,
-		NULL,
-		dw,
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		(LPTSTR) &lpMsgBuf,
-		0, NULL);
+	if (dw) {
+		FormatMessageA(
+			FORMAT_MESSAGE_ALLOCATE_BUFFER |
+			FORMAT_MESSAGE_FROM_SYSTEM |
+			FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL,
+			dw,
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			(LPSTR) &lpMsgBuf,
+			0, NULL);
 
-	// Display the error message and exit the process
+		// Display the error message and exit the process
 
-	lpDisplayBuf = (LPVOID) LocalAlloc(LMEM_ZEROINIT,
-		(lstrlen((LPCTSTR) lpMsgBuf) + lstrlen((LPCTSTR) lpszFunction) + 40) * sizeof(TCHAR));
-	StringCchPrintf((LPTSTR) lpDisplayBuf,
-		LocalSize(lpDisplayBuf) / sizeof(TCHAR),
-		TEXT("%s failed with error %d: %s"),
-		lpszFunction, dw, lpMsgBuf);
-	MessageBox(NULL, (LPCTSTR) lpDisplayBuf, TEXT("Error"), MB_OK);
+		lpDisplayBuf = (LPVOID) LocalAlloc(LMEM_ZEROINIT,
+			(lstrlenA((LPSTR) lpMsgBuf) + lstrlenA((LPSTR) lpszFunction) + 40) * sizeof(CHAR));
+
+		StringCchPrintfA((LPSTR) lpDisplayBuf,
+			LocalSize(lpDisplayBuf) / sizeof(CHAR),
+			("%s failed with error %d: %s"),
+			lpszFunction, dw, lpMsgBuf);
+	}
+	else {
+		lpDisplayBuf = (LPVOID) LocalAlloc(LMEM_ZEROINIT,
+			((lstrlenA((LPSTR) lpszFunction)) * sizeof(CHAR)));
+
+		StringCchPrintfA((LPSTR) lpDisplayBuf,
+			LocalSize(lpDisplayBuf) / sizeof(CHAR),
+			("%s"),
+			lpszFunction);
+	}
+	MessageBoxA(NULL, (LPSTR) lpDisplayBuf, ("Error"), MB_OK);
 
 	LocalFree(lpMsgBuf);
 	LocalFree(lpDisplayBuf);
-	ExitProcess(dw);
+	ExitProcess(EXIT_FAILURE);
 }
-
 
 int clear(int startY, int endY) {
 	COORD coordScreen = { 0, startY };    // Home for the cursor.

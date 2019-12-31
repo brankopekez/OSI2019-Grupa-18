@@ -6,7 +6,9 @@
 
 typedef struct TableCDT* Table;
 
-typedef Vector(*ToVector)(void*);
+typedef Vector(*ToStringVector)(void*);
+
+typedef void (*FreeStringVector)(Vector);
 
 Table NewTable(void);
 
@@ -50,9 +52,13 @@ int GetTableWidth(Table t);
 
 int GetTotalTable(Table t);
 
-ToVector GetToVectorFnTable(Table t);
+ToStringVector GetToStringVectorFnTable(Table t);
 
-void SetToVectorFnTable(Table t, ToVector fn);
+void SetToStringVectorFnTable(Table t, ToStringVector fn);
+
+FreeStringVector GetFreeStringVectorFnTable(Table t);
+
+void SetFreeStringVectorFnTable(Table t, FreeStringVector fn);
 
 Table CloneTable(Table table);
 
