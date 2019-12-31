@@ -1,10 +1,4 @@
-﻿#define _WIN32_WINNT 0x0500
-
-#ifndef UNICODE
-#define UNICODE
-#endif
-
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <conio.h>
 #include <windows.h>
 #include "cslib.h"
@@ -74,12 +68,21 @@ enum B_COLOR {
 	B_WHITE = BACKGROUND_INTENSITY | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE,
 };
 
+string logo[6] = {
+	"   _____           __                 ",
+	"  / ___/__  ______/ /___  ____ ___  __",
+	"  \\__ \\/ / / / __  / __ \\/ __ `/ / / /",
+	" ___/ / /_/ / /_/ / /_/ / /_/ / /_/ / ",
+	"/____/\\__,_/\\__,_/\\____/\\__, /\\__,_/  ",
+	"                       /____/         "
+};
+
 /** @brief	The array of menu options. */
 string menuOptions[] = {
-	"Upravljanje događajima",
-	"Upravljanje kategorijama",
-	"Odjava",
-	"Izlaz"
+	" Upravljanje događajima ",
+	" Upravljanje kategorijama ",
+	" Odjava ",
+	" Izlaz "
 };
 
 enum M_MENU {
@@ -363,6 +366,18 @@ void advanceCursor(int count) {
 	SetConsoleCursorPosition(hStdout, cursorPosition);
 }
 
+void PrintLogo(void) {
+	// 38
+	COORD cursorPosition = { 0, 4 };
+	SetConsoleCursorPosition(hStdout, cursorPosition);
+	for (int i = 0; i < 6; i++) {
+		PrintToConsoleFormatted(CENTER_ALIGN, logo[i]);
+		advanceCursor(1);
+	}
+	//advanceCursor(1);
+	//PrintToConsoleFormatted(CENTER_ALIGN, "Sistem upravljanja događajima");
+}
+
 void loginAttempt(string* inUsername, string* inPassword) {
 	LPSTR prompt1 = "Username: ";
 	LPSTR prompt2 = "Password: ";
@@ -438,6 +453,8 @@ void login(void) {
 			freeMapFields(accountsMap);
 			error_msg("Konfiguracioni fajl %s nije ispravan.\n", fileAccounts);
 		}
+
+		PrintLogo();
 
 		loginAttempt(&inUsername, &inPassword);
 
@@ -833,7 +850,7 @@ int main(void) {
 	windowSetup();
 	Vector events = newVector();
 	Event e;
-	
+
 	/*for (int i = 0; i < 45; i++) {
 		e = newEvent();
 		StringBuffer sb = newStringBuffer();
@@ -904,7 +921,7 @@ int main(void) {
 		addVector(header, tmp);
 	}
 	SetFooterTable(eventsTable, header);
-	
+
 	SetHighAttrTable(eventsTable, HIGHLIGHT_ATTRIBUTES);
 	SetToVectorFnTable(eventsTable, EventToVector);
 
