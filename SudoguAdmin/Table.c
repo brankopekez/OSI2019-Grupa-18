@@ -165,7 +165,7 @@ static string AlignCentre(string text, int width) {
 	int textLength = stringLength(text);
 	StringBuffer sb = newStringBuffer();
 	if (textLength > width) {
-		appendString(sb, substring(text, 0, width - 3));
+		appendString(sb, substring(text, 0, width - 4));
 		appendString(sb, "...");
 	}
 	else {

@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <strsafe.h>
 #include <stdarg.h>
+#include "vector.h"
 
 // Extern variables.
 extern HANDLE hStdout;
@@ -232,4 +233,33 @@ void showCursor(void) {
 	info.dwSize = 100;
 	info.bVisible = TRUE;
 	SetConsoleCursorInfo(hStdout, &info);
+}
+
+static int split(Vector vector, int begin, int end, CompareFn compareFn) {
+	int i = begin, j = end;
+	void* pivot = getVector(vector, begin);
+	while (i < j) {
+		while (compareFn(getVector(vector, i), pivot) <= 0 && i < j) {
+			i++;
+		}
+		while (compareFn(getVector(vector, j), pivot) > 0) {
+			j--;
+		}
+		if (i < j) {
+			void* temp = getVector(vector, i);
+			setVector(vector, i, getVector(vector, j));
+			setVector(vector, j, temp);
+		}
+	}
+	setVector(vector, begin, getVector(vector, j));
+	setVector(vector, j, pivot);
+	return j;
+}
+
+void QuickSortVector(Vector vector, int begin, int end, CompareFn compareFn) {
+	if (begin < end) {
+		int pivot = split(vector, begin, end, compareFn);
+		quickSort(vector, begin, pivot - 1, compareFn);
+		quickSort(vector, pivot + 1, end, compareFn);
+	}
 }

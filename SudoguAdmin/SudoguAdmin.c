@@ -778,18 +778,20 @@ int NewEventScreen(Table events, Table categories) {
 	string eventName = readLine(stdin);
 	PrintToConsole("\tLokacija: ");
 	string eventLocation = readLine(stdin);
-	PrintToConsole("\tDatum i vrijeme (format mora biti u obliku \"dan.mjesec.godina sati:minuta\"): ");
+
 	int day, month, year, hour, minute;
-	scanf("%d.%d.%d %d:%d", &day, &month, &year, &hour, &minute);
+	PrintToConsole("\tDatum (mora biti u obliku \"dan.mjesec.godina.\"): ");
+	scanf("%d.%d.%d.", &day, &month, &year);
+	PrintToConsole("\tVrijeme (mora biti u obliku \"sati:minuti\"): ");
+	scanf("%d:%d", &hour, &minute);
 	time_t eventTime;
-	time(&eventTime);
 	struct tm dateTime = {
 		.tm_mday = day,
 		.tm_mon = month - 1,
 		.tm_year = year - 1900,
 		.tm_hour = hour,
 		.tm_min = minute,
-		.tm_isdst = localtime(&eventTime)->tm_isdst
+		.tm_isdst = -1
 	};
 	eventTime = mktime(&dateTime);
 
@@ -799,7 +801,7 @@ int NewEventScreen(Table events, Table categories) {
 
 	// Get the console screen buffer info. 
 	if (!GetConsoleScreenBufferInfo(hStdout, &csbi)) {
-		return 0;
+		//return 0;
 	}
 	oldCordinates = csbi.dwCursorPosition;
 
@@ -832,6 +834,7 @@ int NewEventScreen(Table events, Table categories) {
 	categoryName = getEventCategoryName(chosenCategory);
 
 	RecoverScreenBuffer(chiBuffer);
+	getchar();
 	SetConsoleCursorPosition(hStdout, oldCordinates);
 
 	PrintToConsole("\tKategorija: %s\n", categoryName);
