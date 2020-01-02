@@ -259,7 +259,7 @@ static int split(Vector vector, int begin, int end, CompareFn compareFn) {
 void QuickSortVector(Vector vector, int begin, int end, CompareFn compareFn) {
 	if (begin < end) {
 		int pivot = split(vector, begin, end, compareFn);
-		quickSort(vector, begin, pivot - 1, compareFn);
-		quickSort(vector, pivot + 1, end, compareFn);
+		QuickSortVector(vector, begin, pivot - 1, compareFn);
+		QuickSortVector(vector, pivot + 1, end, compareFn);
 	}
 }

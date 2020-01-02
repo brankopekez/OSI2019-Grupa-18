@@ -21,6 +21,7 @@ struct TableCDT {
 	Vector footer;
 	ToStringVector ToStringVectorFn;
 	FreeStringVector FreeStringVectorFn;
+	CompareFn cmpFn;
 };
 
 Table NewTable(void) {
@@ -44,6 +45,7 @@ Table NewTable(void) {
 	t->footer = newVector();
 	t->ToStringVectorFn = NULL;
 	t->FreeStringVectorFn = NULL;
+	t->cmpFn = NULL;
 	return t;
 }
 
@@ -146,6 +148,14 @@ void SetFreeStringVectorFnTable(Table t, FreeStringVector fn) {
 	t->FreeStringVectorFn = fn;
 }
 
+CompareFn GetCompareFnTable(Table t) {
+	return t->cmpFn;
+}
+
+void SetCompareFnTable(Table t, CompareFn cmpFn) {
+	t->cmpFn = cmpFn;
+}
+
 Table CloneTable(Table table) {
 	Table clonedTable = newBlock(Table);
 	clonedTable->data = cloneVector(table->data);
@@ -158,6 +168,7 @@ Table CloneTable(Table table) {
 	clonedTable->footer = cloneVector(table->footer);
 	clonedTable->ToStringVectorFn = table->ToStringVectorFn;
 	clonedTable->FreeStringVectorFn = table->FreeStringVectorFn;
+	clonedTable->cmpFn = table->cmpFn;
 	return clonedTable;
 }
 
@@ -294,7 +305,10 @@ static int PrintFooter(Table t, Vector columns) {
 }
 
 static int DrawTable(Table table, int currentSelection, int startIndex) {
+	// Data vector.
 	Vector data = GetDataTable(table);
+
+	// Vector to hold strings that represents columns in table.
 	Vector dataStringColumns = newVector();
 	ToStringVector ToFn = GetToStringVectorFnTable(table);
 	for (int i = 0; i < sizeVector(data); i++) {
@@ -375,6 +389,15 @@ static int DrawTable(Table table, int currentSelection, int startIndex) {
 }
 
 int MainTable(Table table, int* selection, WORD* keyCode) {
+	// Data vector.
+	Vector data = GetDataTable(table);
+
+	// Function to compare data.
+	CompareFn cmpFn = GetCompareFnTable(table);
+
+	// Sort the vector.
+	QuickSortVector(data, 0, sizeVector(data) - 1, cmpFn);
+
 	// Hide the cursor inside the table.
 	CONSOLE_CURSOR_INFO info;
 	info.dwSize = 100;

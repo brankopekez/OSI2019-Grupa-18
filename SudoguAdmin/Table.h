@@ -60,6 +60,10 @@ FreeStringVector GetFreeStringVectorFnTable(Table t);
 
 void SetFreeStringVectorFnTable(Table t, FreeStringVector fn);
 
+CompareFn GetCompareFnTable(Table t);
+
+void SetCompareFnTable(Table t, CompareFn cmpFn);
+
 Table CloneTable(Table table);
 
 int MainTable(Table table, int* selection, WORD* keyCode);

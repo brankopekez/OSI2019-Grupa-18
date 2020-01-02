@@ -119,6 +119,13 @@ string categoriesFooter[] = {
 	"F9: Dodaj novu kategoriju.",
 };
 
+enum EVENTS_HEADER_OPTIONS {
+	EVENTS_HEADER_NAME,
+	EVENTS_HEADER_LOCATION,
+	EVENTS_HEADER_CATEGORY,
+	EVENTS_HEADER_TIME
+};
+
 /** @brief	Global variable for accounts config filename */
 const string fileAccounts = "accounts.txt";
 
@@ -769,6 +776,59 @@ int RecoverScreenBuffer(CHAR_INFO* chiBuffer) {
 	return 1;
 }
 
+int CompareEventNames(const void* p1, const void* p2) {
+	Event first = (Event) p1;
+	Event second = (Event) p2;
+	string firstName = getEventName(first);
+	string secondName = getEventName(second);
+	return stringCompare(firstName, secondName);
+}
+
+int CompareEventLocations(const void* p1, const void* p2) {
+	Event first = (Event) p1;
+	Event second = (Event) p2;
+	string firstLocation = getEventLocation(first);
+	string secondLocation = getEventLocation(second);
+	int res = stringCompare(firstLocation, secondLocation);
+	if (res == 0) {
+		res = CompareEventNames(p1, p2);
+	}
+	return res;
+}
+
+int CompareEventCategories(const void* p1, const void* p2) {
+	Event first = (Event) p1;
+	Event second = (Event) p2;
+	string firstCategory = getEventCategory(first);
+	string secondCategory = getEventCategory(second);
+	int res = stringCompare(firstCategory, secondCategory);
+	if (res == 0) {
+		res = CompareEventNames(p1, p2);
+	}
+	return res;
+}
+
+int CompareEventTimes(const void* p1, const void* p2) {
+	Event first = (Event) p1;
+	Event second = (Event) p2;
+	time_t firstTime = getEventTime(first);
+	time_t secondTime = getEventTime(second);
+	if (firstTime == secondTime) {
+		return CompareEventNames(p1, p2);
+	}
+	else {
+		return (firstTime < secondTime) ? -1 : +1;
+	}
+}
+
+int CompareEventCategoryName(const void* p1, const void* p2) {
+	EventCategory first = (EventCategory) p1;
+	EventCategory second = (EventCategory) p2;
+	string firstName = getEventCategoryName(first);
+	string secondName = getEventCategoryName(second);
+	return stringCompare(firstName, secondName);
+}
+
 int NewEventScreen(Table events, Table categories) {
 	string title = "Unos novog događaja";
 	system("cls");
@@ -856,6 +916,42 @@ int NewEventScreen(Table events, Table categories) {
 	return 1;
 }
 
+void SortEventsTable(Table t) {
+	Vector header = GetHeaderTable(t);
+	Menu menu = newMenu();
+	Vector menuVector = getMenuOptions(menu);
+	freeVector(menuVector);
+	setMenuOptions(menu, cloneVector(header));
+	centerMenu(menu);
+	setHighlightAttributes(menu, HIGHLIGHT_ATTRIBUTES);
+
+	// Selected option inside the main menu.
+	int menuOption;
+
+	system("cls");
+	PrintTitle("Odaberite naziv kolone po kojoj želite da sortirate podatke");
+	if (!mainMenu(menu, &menuOption)) {
+		error_msg("mainMenu");
+	}
+	switch (menuOption) {
+	case EVENTS_HEADER_NAME:
+		SetCompareFnTable(t, CompareEventNames);
+		break;
+	case EVENTS_HEADER_LOCATION:
+		SetCompareFnTable(t, CompareEventLocations);
+		break;
+	case EVENTS_HEADER_CATEGORY:
+		SetCompareFnTable(t, CompareEventCategories);
+		break;
+	case EVENTS_HEADER_TIME:
+		SetCompareFnTable(t, CompareEventTimes);
+		break;
+	default:
+		break;
+	}
+
+}
+
 int EventsHandling(Table events, Table categories) {
 
 	// Variable for registering end.
@@ -900,6 +996,7 @@ int EventsHandling(Table events, Table categories) {
 			NewEventScreen(events, categories);
 			break;
 		case VK_F10: // Sort the list.
+			SortEventsTable(events);
 			break;
 		default:
 			break;
@@ -1047,12 +1144,14 @@ int main(void) {
 	SetHighAttrTable(eventsTable, HIGHLIGHT_ATTRIBUTES);
 	SetToStringVectorFnTable(eventsTable, EventToVector);
 	SetFreeStringVectorFnTable(eventsTable, FreeEventStringVector);
+	SetCompareFnTable(eventsTable, CompareEventNames);
 
 
 	Table categoriesTable = NewTable();
 	SetHighAttrTable(categoriesTable, HIGHLIGHT_ATTRIBUTES);
 	SetToStringVectorFnTable(categoriesTable, EventCategoryToVector);
 	SetFreeStringVectorFnTable(categoriesTable, FreeEventCategoryStringVector);
+	SetCompareFnTable(categoriesTable, CompareEventCategoryName);
 	header = newVector();
 	for (int i = 0; i < 1; i++) {
 		string tmp = copyString(categoriesHeader[i]);
