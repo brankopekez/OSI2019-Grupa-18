@@ -191,6 +191,11 @@ int drawMenu(Menu menu, int currentSelection) {
 }
 
 int mainMenu(Menu menu, int* selection) {
+
+	// Save the cursor info.
+	CONSOLE_CURSOR_INFO oldInfo;
+	GetConsoleCursorInfo(hStdout, &oldInfo);
+
 	// Hide the cursor inside the menu.
 	CONSOLE_CURSOR_INFO info;
 	info.dwSize = 100;
@@ -201,18 +206,16 @@ int mainMenu(Menu menu, int* selection) {
 
 	// Turn off the line input and echo input modes 
 	if (!GetConsoleMode(hStdin, &fdwOldMode)) {
-		// Show the cursor.
-		info.bVisible = TRUE;
-		SetConsoleCursorInfo(hStdout, &info);
+		// Restore the cursor.
+		SetConsoleCursorInfo(hStdout, &oldInfo);
 		return 0;
 	}
 
 	fdwMode = fdwOldMode &
 		~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT);
 	if (!SetConsoleMode(hStdin, fdwMode)) {
-		// Show the cursor.
-		info.bVisible = TRUE;
-		SetConsoleCursorInfo(hStdout, &info);
+		// Restore the cursor.
+		SetConsoleCursorInfo(hStdout, &oldInfo);
 		return 0;
 	}
 
@@ -240,13 +243,12 @@ int mainMenu(Menu menu, int* selection) {
 		// Restore the original console mode. 
 		SetConsoleMode(hStdin, fdwOldMode);
 
-		// Show the cursor.
-		info.bVisible = TRUE;
-		SetConsoleCursorInfo(hStdout, &info);
+		// Restore the cursor.
+		SetConsoleCursorInfo(hStdout, &oldInfo);
 		return 0;
 	}
 	// End line for clearing.
-	int endY = csbi.dwSize.Y - 1;
+	int endY = startY + totalOptions;
 
 	// Registered event that has happend.
 	INPUT_RECORD event;
@@ -257,9 +259,19 @@ int mainMenu(Menu menu, int* selection) {
 	// Loop for showing the menu, until done.
 	while (!done) {
 		if (!clear(startY, endY)) {
+			// Restore the original console mode. 
+			SetConsoleMode(hStdin, fdwOldMode);
+
+			// Restore the cursor.
+			SetConsoleCursorInfo(hStdout, &oldInfo);
 			return 0;
 		}
 		if (!drawMenu(menu, currentSelection)) {
+			// Restore the original console mode. 
+			SetConsoleMode(hStdin, fdwOldMode);
+
+			// Restore the cursor.
+			SetConsoleCursorInfo(hStdout, &oldInfo);
 			return 0;
 		}
 		system("pause>nul");
@@ -289,7 +301,7 @@ int mainMenu(Menu menu, int* selection) {
 					break;
 				case VK_ESCAPE:
 					if (canCancel) {
-						currentSelection = -1;
+						currentSelection = MENU_CANCEL;
 						done = TRUE;
 					}
 					break;
@@ -305,9 +317,8 @@ int mainMenu(Menu menu, int* selection) {
 	// Restore the original console mode. 
 	SetConsoleMode(hStdin, fdwOldMode);
 
-	// Show the cursor.
-	info.bVisible = TRUE;
-	SetConsoleCursorInfo(hStdout, &info);
+	// Restore the cursor.
+	SetConsoleCursorInfo(hStdout, &oldInfo);
 
 	*selection = currentSelection;
 	return 1;

@@ -126,6 +126,22 @@ enum EVENTS_HEADER_OPTIONS {
 	EVENTS_HEADER_TIME
 };
 
+string eventFields[] = {
+	"Naziv",
+	"Lokacija",
+	"Kategorija",
+	"Datum i vrijeme",
+	"Opis"
+};
+
+enum EDIT_EVENT_MENU {
+	EDIT_EVENT_NAME,
+	EDIT_EVENT_LOCATION,
+	EDIT_EVENT_CATEGORY,
+	EDIT_EVENT_TIME,
+	EDIT_EVENT_DESCRIPTION
+};
+
 /** @brief	Global variable for accounts config filename */
 const string fileAccounts = "accounts.txt";
 
@@ -614,6 +630,59 @@ void PrintStatusLine(const string format) {
 	SetConsoleCursorPosition(hStdout, position);
 }
 
+string ShowPrompt(const string title, const string footer, const string format, ...) {
+	// Hide the cursor inside the table.
+	CONSOLE_CURSOR_INFO info;
+	info.dwSize = 100;
+	info.bVisible = FALSE;
+	SetConsoleCursorInfo(hStdout, &info);
+
+	va_list args;
+	va_start(args, format);
+	int len = _vscprintf(format, args) + 1;
+	string buf = newArray(len, char);
+	vsprintf(buf, format, args);
+
+	system("cls");
+
+	PrintTitle(title);
+	PrintStatusLine(footer);
+
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	COORD sizeConsole;
+	COORD cursorPosition;
+
+	// Get the current screen sb size and window position. 
+
+	if (!GetConsoleScreenBufferInfo(hStdout, &csbi)) {
+		freeBlock(buf);
+		return NULL;
+	}
+	sizeConsole = csbi.dwSize;
+	cursorPosition.X = 0;
+	cursorPosition.Y = (sizeConsole.Y - 3) / 2;
+	SetConsoleCursorPosition(hStdout, cursorPosition);
+	PrintToConsoleFormatted(CENTER_ALIGN, buf);
+
+	// Variable for registering end.
+	BOOL done = FALSE;
+
+	string inputString = NULL;
+
+	while (!done) {
+		inputString = readLine(stdin);
+		if (strlen(inputString) != 0) {
+			done = TRUE;
+		}
+	}
+
+	// Show the cursor.
+	info.bVisible = TRUE;
+	SetConsoleCursorInfo(hStdout, &info);
+
+	return inputString;
+}
+
 int YesNoPrompt(const string title, const string format, ...) {
 	// Hide the cursor inside the table.
 	CONSOLE_CURSOR_INFO info;
@@ -829,45 +898,29 @@ int CompareEventCategoryName(const void* p1, const void* p2) {
 	return stringCompare(firstName, secondName);
 }
 
-int NewEventScreen(Table events, Table categories) {
-	string title = "Unos novog događaja";
-	system("cls");
-	PrintTitle(title);
-	advanceCursor(3);
-	PrintToConsole("\tNaziv događaja: ");
-	string eventName = readLine(stdin);
-	PrintToConsole("\tLokacija: ");
-	string eventLocation = readLine(stdin);
-
-	int day, month, year, hour, minute;
-	PrintToConsole("\tDatum (mora biti u obliku \"dan.mjesec.godina.\"): ");
-	scanf("%d.%d.%d.", &day, &month, &year);
-	PrintToConsole("\tVrijeme (mora biti u obliku \"sati:minuti\"): ");
-	scanf("%d:%d", &hour, &minute);
-	time_t eventTime;
-	struct tm dateTime = {
-		.tm_mday = day,
-		.tm_mon = month - 1,
-		.tm_year = year - 1900,
-		.tm_hour = hour,
-		.tm_min = minute,
-		.tm_isdst = -1
-	};
-	eventTime = mktime(&dateTime);
+string InputEventCategory(Table categories) {
+	// Save the cursor info.
+	CONSOLE_CURSOR_INFO oldInfo;
+	GetConsoleCursorInfo(hStdout, &oldInfo);
 
 	string categoryName;
-	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	COORD oldCordinates; // Save original coordinates.
-
-	// Get the console screen buffer info. 
-	if (!GetConsoleScreenBufferInfo(hStdout, &csbi)) {
-		//return 0;
-	}
-	oldCordinates = csbi.dwCursorPosition;
-
-	CHAR_INFO* chiBuffer = SaveScreenBuffer();
 
 	Table cpyTable = CloneTable(categories);
+
+	DWORD fdwMode, fdwOldMode;
+
+	// Turn off the line input and echo input modes 
+	if (!GetConsoleMode(hStdin, &fdwOldMode)) {
+		return 0;
+	}
+
+	fdwMode = fdwOldMode &
+		~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT);
+	if (!SetConsoleMode(hStdin, fdwMode)) {
+		return 0;
+	}
+
+	hideCursor();
 
 	// Variable for registering end.
 	BOOL done = FALSE;
@@ -880,7 +933,11 @@ int NewEventScreen(Table events, Table categories) {
 
 	while (!done) {
 		if (!MainTable(cpyTable, &tableSelection, &registeredKeyCode)) {
-			return 0;
+			// Restore the original console mode. 
+			SetConsoleMode(hStdin, fdwOldMode);
+			// Restore the cursor.
+			SetConsoleCursorInfo(hStdout, &oldInfo);
+			return NULL;
 		}
 		switch (registeredKeyCode) {
 		case VK_RETURN:
@@ -892,9 +949,68 @@ int NewEventScreen(Table events, Table categories) {
 	}
 	EventCategory chosenCategory = getVector(GetDataTable(categories), tableSelection);
 	categoryName = getEventCategoryName(chosenCategory);
+	FreeTable(cpyTable);
+
+	// Restore the original console mode. 
+	SetConsoleMode(hStdin, fdwOldMode);
+
+	// Restore the cursor.
+	SetConsoleCursorInfo(hStdout, &oldInfo);
+
+	return categoryName;
+}
+
+time_t InputEventTime(void) {
+	int day, month, year, hour, minute;
+	PrintToConsole("\tDatum (mora biti u obliku \"dan.mjesec.godina.\"): ");
+	string inputString = readLine(stdin);
+	sscanf(inputString, "%d.%d.%d.", &day, &month, &year);
+	//scanf("%d.%d.%d.", &day, &month, &year);
+	PrintToConsole("\tVrijeme (mora biti u obliku \"sati:minuti\"): ");
+	freeBlock(inputString);
+	inputString = readLine(stdin);
+	sscanf(inputString, "%d:%d", &hour, &minute);
+	//scanf("%d:%d", &hour, &minute);
+	// 
+	time_t eventTime;
+	struct tm dateTime = {
+		.tm_mday = day,
+		.tm_mon = month - 1,
+		.tm_year = year - 1900,
+		.tm_hour = hour,
+		.tm_min = minute,
+		.tm_isdst = -1
+	};
+	eventTime = mktime(&dateTime);
+	return eventTime;
+}
+
+int NewEventScreen(Table events, Table categories) {
+	string title = "Unos novog događaja";
+	system("cls");
+	PrintTitle(title);
+	advanceCursor(3);
+	PrintToConsole("\tNaziv događaja: ");
+	string eventName = readLine(stdin);
+	PrintToConsole("\tLokacija: ");
+	string eventLocation = readLine(stdin);
+
+	time_t eventTime = InputEventTime();
+
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	COORD oldCordinates; // Save original coordinates.
+
+	// Get the console screen buffer info. 
+	if (!GetConsoleScreenBufferInfo(hStdout, &csbi)) {
+		return 0;
+	}
+	oldCordinates = csbi.dwCursorPosition;
+
+	CHAR_INFO* chiBuffer = SaveScreenBuffer();
+
+	string categoryName = InputEventCategory(categories);
 
 	RecoverScreenBuffer(chiBuffer);
-	getchar();
 	SetConsoleCursorPosition(hStdout, oldCordinates);
 
 	PrintToConsole("\tKategorija: %s\n", categoryName);
@@ -912,7 +1028,6 @@ int NewEventScreen(Table events, Table categories) {
 	Vector eventsVector = GetDataTable(events);
 	addVector(eventsVector, temp);
 
-	FreeTable(cpyTable);
 	return 1;
 }
 
@@ -952,9 +1067,73 @@ void SortEventsTable(Table t) {
 
 }
 
-int ShowEventDetails(Table table, int index) {
+int EditEvent(Table events, Table categories, int index) {
+	Vector data = GetDataTable(events);
+	Event event = getVector(data, index);
+
+	Menu menu = newMenu();
+	Vector menuVector = getMenuOptions(menu);
+	for (int i = 0; i < 5; i++) {
+		addVector(menuVector, eventFields[i]);
+	}
+	centerMenu(menu);
+	setHighlightAttributes(menu, HIGHLIGHT_ATTRIBUTES);
+	setCancelMenu(menu, TRUE);
+
 	hideCursor();
-	Vector data = GetDataTable(table);
+
+	// Variable for registering end.
+	BOOL done = FALSE;
+
+	// Selected option inside the main menu.
+	int menuOption;
+
+	// String for input.
+	string inputString;
+
+	// For input time.
+	time_t inputTime;
+
+	while (!done) {
+		system("cls");
+		PrintTitle("Koje polje želite da mijenjate?");
+		PrintStatusLine(" ESC: Povratak. ");
+		if (!mainMenu(menu, &menuOption)) {
+			return 0;
+		}
+		switch (menuOption) {
+		case EDIT_EVENT_NAME:
+			inputString = ShowPrompt("Unesite novi naziv", " RETURN: Potvrdi.", "Naziv: ");
+			setEventName(event, inputString);
+			break;
+		case EDIT_EVENT_LOCATION:
+			inputString = ShowPrompt("Unesite novu lokaciju", " RETURN: Potvrdi.", "Lokacija: ");
+			setEventLocation(event, inputString);
+			break;
+		case EDIT_EVENT_CATEGORY:
+			inputString = InputEventCategory(categories);
+			setEventCategory(event, inputString);
+			break;
+		case EDIT_EVENT_TIME:
+			inputTime = InputEventTime();
+			setEventTime(event, inputTime);
+			break;
+		case EDIT_EVENT_DESCRIPTION:
+			inputString = ShowPrompt("Unesite novi opis", " RETURN: Potvrdi.", "Opis: ");
+			setEventDescription(event, inputString);
+			break;
+		case MENU_CANCEL:
+			done = TRUE;
+			break;
+		default:
+			break;
+		}
+	}
+	return 1;
+}
+
+int ShowEventDetails(Table events, Table categories, int index) {
+	Vector data = GetDataTable(events);
 	Event event = getVector(data, index);
 
 	struct tm newtime;
@@ -973,22 +1152,86 @@ int ShowEventDetails(Table table, int index) {
 	}
 
 	string title = "Pregled detalja događaja";
-	system("cls");
-	PrintTitle(title);
-	advanceCursor(3);
-	PrintToConsole("\tNaziv: %s\n", getEventName(event));
-	PrintToConsole("\tLokacija: %s\n", getEventLocation(event));
-	PrintToConsole("\tKategorija: %s\n", getEventCategory(event));
-	PrintToConsole("\tDatum i vrijeme: %s\n", buff);
-	PrintToConsole("\tOpis: %s", getEventDescription(event));
 
-	PrintStatusLine(" Pritiskom na bilo koje dugme vraćate se nazad. ");
-	system("pause>nul");
+	DWORD fdwMode, fdwOldMode;
+
+	// Turn off the line input and echo input modes 
+	if (!GetConsoleMode(hStdin, &fdwOldMode)) {
+		showCursor();
+		return 0;
+	}
+
+	fdwMode = fdwOldMode &
+		~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT);
+	if (!SetConsoleMode(hStdin, fdwMode)) {
+		showCursor();
+		return 0;
+	}
+
+	// Variable for registering end.
+	BOOL done = FALSE;
+
+	// Registered event that has happend.
+	INPUT_RECORD inputEvent;
+
+	// Number of read characters.
+	DWORD cRead;
+
+	while (!done) {
+		system("cls");
+
+		PrintTitle(title);
+		advanceCursor(3);
+		PrintToConsole("\tNaziv: %s\n", getEventName(event));
+		PrintToConsole("\tLokacija: %s\n", getEventLocation(event));
+		PrintToConsole("\tKategorija: %s\n", getEventCategory(event));
+		PrintToConsole("\tDatum i vrijeme: %s\n", buff);
+		PrintToConsole("\tOpis: %s", getEventDescription(event));
+		PrintStatusLine(" ESC: Povratak. | F9: Izmjena događaja. ");
+
+		hideCursor();
+		system("pause>nul");
+		if (WaitForSingleObject(hStdin, INFINITE) == WAIT_OBJECT_0)  /* if kbhit */
+		{
+			/* Get the input event */
+			ReadConsoleInput(hStdin, &inputEvent, 1, &cRead);
+
+			/* Only respond to key release events */
+			if (inputEvent.EventType == KEY_EVENT)
+				switch (inputEvent.Event.KeyEvent.wVirtualKeyCode) {
+				case VK_ESCAPE:
+					done = TRUE;
+					break;
+				case VK_F9:
+					if (!EditEvent(events, categories, index)) {
+						return 0;
+					}
+					break;
+				default:
+					break;
+				}
+		}
+	}
+
 	showCursor();
 	return 1;
 }
 
 int EventsHandling(Table events, Table categories) {
+	DWORD fdwMode, fdwOldMode;
+
+	// Turn off the line input and echo input modes 
+	if (!GetConsoleMode(hStdin, &fdwOldMode)) {
+		return 0;
+	}
+
+	fdwMode = fdwOldMode &
+		~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT);
+	if (!SetConsoleMode(hStdin, fdwMode)) {
+		return 0;
+	}
+
+	hideCursor();
 
 	// Variable for registering end.
 	BOOL done = FALSE;
@@ -1001,6 +1244,7 @@ int EventsHandling(Table events, Table categories) {
 
 	while (!done) {
 		if (!MainTable(events, &tableSelection, &registeredKeyCode)) {
+			showCursor();
 			return 0;
 		}
 		switch (registeredKeyCode) {
@@ -1011,7 +1255,8 @@ int EventsHandling(Table events, Table categories) {
 			if (isEmptyVector(GetDataTable(events))) {
 				break;
 			}
-			if (!ShowEventDetails(events, tableSelection)) {
+			if (!ShowEventDetails(events, categories, tableSelection)) {
+				showCursor();
 				return 0;
 			}
 			break;
@@ -1027,10 +1272,8 @@ int EventsHandling(Table events, Table categories) {
 		case VK_F9: // New event.
 			if (isEmptyVector(GetDataTable(categories))) {
 				system("cls");
-				hideCursor();
 				PrintToConsoleFormatted(CENTER_ALIGN | MIDDLE, "Mora postojati bar jedna kategorija događaja u evidenciji.");
 				system("pause>nul");
-				showCursor();
 				break;
 			}
 			NewEventScreen(events, categories);
@@ -1042,6 +1285,11 @@ int EventsHandling(Table events, Table categories) {
 			break;
 		}
 	}
+
+	// Restore the original console mode. 
+	SetConsoleMode(hStdin, fdwOldMode);
+
+	showCursor();
 	return 1;
 }
 
@@ -1062,6 +1310,19 @@ void NewCategoryScreen(Table table) {
 }
 
 int CategoriesHandling(Table table) {
+	DWORD fdwMode, fdwOldMode;
+
+	// Turn off the line input and echo input modes 
+	if (!GetConsoleMode(hStdin, &fdwOldMode)) {
+		return 0;
+	}
+
+	fdwMode = fdwOldMode &
+		~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT);
+	if (!SetConsoleMode(hStdin, fdwMode)) {
+		return 0;
+	}
+	hideCursor();
 
 	// Variable for registering end.
 	BOOL done = FALSE;
@@ -1074,6 +1335,7 @@ int CategoriesHandling(Table table) {
 
 	while (!done) {
 		if (!MainTable(table, &tableSelection, &registeredKeyCode)) {
+			showCursor();
 			return 0;
 		}
 		switch (registeredKeyCode) {
@@ -1096,6 +1358,10 @@ int CategoriesHandling(Table table) {
 			break;
 		}
 	}
+	// Restore the original console mode. 
+	SetConsoleMode(hStdin, fdwOldMode);
+
+	showCursor();
 	return 1;
 }
 
