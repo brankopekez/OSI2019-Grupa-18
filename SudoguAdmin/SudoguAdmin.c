@@ -952,6 +952,42 @@ void SortEventsTable(Table t) {
 
 }
 
+int ShowEventDetails(Table table, int index) {
+	hideCursor();
+	Vector data = GetDataTable(table);
+	Event event = getVector(data, index);
+
+	struct tm newtime;
+	char buff[BUFSIZ];
+	time_t long_time = getEventTime(event);
+	errno_t err;
+
+	// Convert to local time.
+	err = localtime_s(&newtime, &long_time);
+	if (err) {
+		return 0;
+	}
+
+	if (!strftime(buff, sizeof buff, "%A %x %R", &newtime)) {
+		return 0;
+	}
+
+	string title = "Pregled detalja događaja";
+	system("cls");
+	PrintTitle(title);
+	advanceCursor(3);
+	PrintToConsole("\tNaziv: %s\n", getEventName(event));
+	PrintToConsole("\tLokacija: %s\n", getEventLocation(event));
+	PrintToConsole("\tKategorija: %s\n", getEventCategory(event));
+	PrintToConsole("\tDatum i vrijeme: %s\n", buff);
+	PrintToConsole("\tOpis: %s", getEventDescription(event));
+
+	PrintStatusLine(" Pritiskom na bilo koje dugme vraćate se nazad. ");
+	system("pause>nul");
+	showCursor();
+	return 1;
+}
+
 int EventsHandling(Table events, Table categories) {
 
 	// Variable for registering end.
@@ -972,8 +1008,12 @@ int EventsHandling(Table events, Table categories) {
 			done = TRUE;
 			break;
 		case VK_RETURN: // Show details of the selected event.
-			system("cls");
-			PrintToConsole("Detalji");
+			if (isEmptyVector(GetDataTable(events))) {
+				break;
+			}
+			if (!ShowEventDetails(events, tableSelection)) {
+				return 0;
+			}
 			break;
 		case VK_DELETE: // Delete selected event;
 			if (isEmptyVector(GetDataTable(events))) {
@@ -1040,10 +1080,6 @@ int CategoriesHandling(Table table) {
 		case VK_ESCAPE: // Exit from table.
 			done = TRUE;
 			break;
-		case VK_RETURN: // Show details of the selected event.
-			system("cls");
-			PrintToConsole("Detalji");
-			break;
 		case VK_DELETE: // Delete selected event category;
 			if (isEmptyVector(GetDataTable(table))) {
 				break;
@@ -1055,8 +1091,6 @@ int CategoriesHandling(Table table) {
 			break;
 		case VK_F9: // New event.
 			NewCategoryScreen(table);
-			break;
-		case VK_F10: // Sort the list.
 			break;
 		default:
 			break;
