@@ -278,6 +278,7 @@ void SaveEventsToFile(Vector events, string fileName) {
 	else {
 		// File was opened, filepoint can be used to read the stream.
 
+		QuickSortVector(events, 0, sizeVector(events) - 1, CompareEventTimesDescending);
 		size_t count = sizeVector(events);
 		fwrite(&count, sizeof count, 1, filepoint);
 		for (size_t i = 0; i < count; i++) {
@@ -1043,6 +1044,19 @@ int CompareEventTimes(const void* p1, const void* p2) {
 	}
 	else {
 		return (firstTime < secondTime) ? -1 : +1;
+	}
+}
+
+int CompareEventTimesDescending(const void* p1, const void* p2) {
+	Event first = (Event) p1;
+	Event second = (Event) p2;
+	time_t firstTime = getEventTime(first);
+	time_t secondTime = getEventTime(second);
+	if (firstTime == secondTime) {
+		return CompareEventNames(p1, p2);
+	}
+	else {
+		return (firstTime > secondTime) ? -1 : +1;
 	}
 }
 
