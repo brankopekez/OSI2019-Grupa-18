@@ -17,56 +17,7 @@
 #include "Menu.h"
 #include "utilities.h"
 #include "Table.h"
-
-/**
- * @enum	F_COLOR
- *
- * @brief	Values that represent foreground colors.
- */
-
-enum F_COLOR {
-	F_BLACK = 0,
-	F_DARKBLUE = FOREGROUND_BLUE,
-	F_DARKGREEN = FOREGROUND_GREEN,
-	F_DARKCYAN = FOREGROUND_GREEN | FOREGROUND_BLUE,
-	F_DARKRED = FOREGROUND_RED,
-	F_DARKMAGENTA = FOREGROUND_RED | FOREGROUND_BLUE,
-	F_DARKYELLOW = FOREGROUND_RED | FOREGROUND_GREEN,
-	F_DARKGRAY = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE,
-	F_GRAY = FOREGROUND_INTENSITY,
-	F_BLUE = FOREGROUND_INTENSITY | FOREGROUND_BLUE,
-	F_GREEN = FOREGROUND_INTENSITY | FOREGROUND_GREEN,
-	F_CYAN = FOREGROUND_INTENSITY | FOREGROUND_GREEN | FOREGROUND_BLUE,
-	F_RED = FOREGROUND_INTENSITY | FOREGROUND_RED,
-	F_MAGENTA = FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_BLUE,
-	F_YELLOW = FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN,
-	F_WHITE = FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE,
-};
-
-/**
- * @enum	B_COLOR
- *
- * @brief	Values that represent background colors.
- */
-
-enum B_COLOR {
-	B_BLACK = 0,
-	B_DARKBLUE = BACKGROUND_BLUE,
-	B_DARKGREEN = BACKGROUND_GREEN,
-	B_DARKCYAN = BACKGROUND_GREEN | BACKGROUND_BLUE,
-	B_DARKRED = BACKGROUND_RED,
-	B_DARKMAGENTA = BACKGROUND_RED | BACKGROUND_BLUE,
-	B_DARKYELLOW = BACKGROUND_RED | BACKGROUND_GREEN,
-	B_DARKGRAY = BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE,
-	B_GRAY = BACKGROUND_INTENSITY,
-	B_BLUE = BACKGROUND_INTENSITY | BACKGROUND_BLUE,
-	B_GREEN = BACKGROUND_INTENSITY | BACKGROUND_GREEN,
-	B_CYAN = BACKGROUND_INTENSITY | BACKGROUND_GREEN | BACKGROUND_BLUE,
-	B_RED = BACKGROUND_INTENSITY | BACKGROUND_RED,
-	B_MAGENTA = BACKGROUND_INTENSITY | BACKGROUND_RED | BACKGROUND_BLUE,
-	B_YELLOW = BACKGROUND_INTENSITY | BACKGROUND_RED | BACKGROUND_GREEN,
-	B_WHITE = BACKGROUND_INTENSITY | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE,
-};
+#include <io.h>
 
 string logo[6] = {
 	"   _____           __                 ",
@@ -78,7 +29,7 @@ string logo[6] = {
 };
 
 /** @brief	The array of menu options. */
-string menuOptions[] = {
+string menuOptions[4] = {
 	" Upravljanje događajima ",
 	" Upravljanje kategorijama ",
 	" Odjava ",
@@ -93,7 +44,7 @@ enum M_MENU {
 };
 
 /** @brief	The events table header (column names). */
-string eventsHeader[] = {
+string eventsHeader[4] = {
 	"Naziv",
 	"Lokacija",
 	"Kategorija",
@@ -101,7 +52,7 @@ string eventsHeader[] = {
 };
 
 /** @brief	The events table footer. */
-string eventsFooter[] = {
+string eventsFooter[5] = {
 	"ESC: Izlaz.",
 	"RETURN: Detalji.",
 	"DELETE: Obriši.",
@@ -109,11 +60,11 @@ string eventsFooter[] = {
 	"F10: Sortiraj listu."
 };
 
-string categoriesHeader[] = {
+string categoriesHeader[1] = {
 	"Naziv kategorije događaja"
 };
 
-string categoriesFooter[] = {
+string categoriesFooter[3] = {
 	"ESC: Izlaz.",
 	"DELETE: Obriši kategoriju.",
 	"F9: Dodaj novu kategoriju.",
@@ -126,11 +77,39 @@ enum EVENTS_HEADER_OPTIONS {
 	EVENTS_HEADER_TIME
 };
 
-/** @brief	Global variable for accounts config filename */
+string eventFields[5] = {
+	"Naziv",
+	"Lokacija",
+	"Kategorija",
+	"Datum i vrijeme",
+	"Opis"
+};
+
+enum EDIT_EVENT_MENU {
+	EDIT_EVENT_NAME,
+	EDIT_EVENT_LOCATION,
+	EDIT_EVENT_CATEGORY,
+	EDIT_EVENT_TIME,
+	EDIT_EVENT_DESCRIPTION
+};
+
+string categoriesPredefined[3] = {
+	"Izložbe",
+	"Koncerti",
+	"Promocije"
+};
+
+/** @brief	Global variable for accounts config file name */
 const string fileAccounts = "accounts.txt";
 
-/** @brief	The city config filename  */
+/** @brief	The city config file name  */
 const string fileCity = "city.txt";
+
+/** @brief	The events data file name  */
+const string fileEvents = "events.dat";
+
+/** @brief	The event categories data file name  */
+const string fileCategories = "categories.dat";
 
 /** @brief	Name of the program (used on error) */
 const string programName = "SudoguAdmin";
@@ -167,6 +146,214 @@ void error_msg(const string format, ...) {
 	ErrorExit(buf);
 }
 
+void advanceCursor(int count) {
+	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+	COORD cursorPosition;
+
+	// Get the current screen sb size and window position. 
+
+	if (!GetConsoleScreenBufferInfo(hStdout, &csbiInfo)) {
+		error_msg("GetConsoleScreenBufferInfo (%d)\n", GetLastError());
+	}
+	cursorPosition = csbiInfo.dwCursorPosition;
+	cursorPosition.Y += count;
+	SetConsoleCursorPosition(hStdout, cursorPosition);
+}
+
+char* ReadString(FILE* inf) {
+	if (inf == NULL)
+		return NULL;
+	size_t size = 1;
+	char* buf = malloc(size);
+	if (buf == NULL) {
+		error_msg("Alokacija memorije neuspješna");
+	}
+	size_t i = 0;
+	int ch;
+	while ((ch = fgetc(inf)) != EOF && ch != '\0') {
+		if (i + 1 >= size) {
+			size_t newsize = (size + 1) * 4 - 1;
+			char* newbuf = realloc(buf, newsize);
+			if (newbuf == NULL) {
+				error_msg("Alokacija memorije neuspješna");
+			}
+			buf = newbuf;
+			size = newsize;
+		}
+		buf[i++] = ch;
+	}
+	buf[i++] = '\0';
+	// If a final re-size is desired...
+	char* newbuf = realloc(buf, i);
+	if (newbuf == NULL) {
+		error_msg("Alokacija memorije neuspješna");
+	}
+	buf = newbuf;
+	return buf;
+}
+
+Event ReadEvent(FILE* filepoint) {
+	string eventName = ReadString(filepoint);
+	string eventDescription = ReadString(filepoint);
+	string eventLocation = ReadString(filepoint);
+	string eventCategory = ReadString(filepoint);
+	time_t eventTime;
+	fread(&eventTime, sizeof(time_t), 1, filepoint);
+
+	Event e = newEvent();
+	setEventName(e, eventName);
+	setEventDescription(e, eventDescription);
+	setEventLocation(e, eventLocation);
+	setEventCategory(e, eventCategory);
+	setEventTime(e, eventTime);
+
+	return e;
+}
+
+bool fileExists(string path) {
+	int status;
+
+	if (path == NULL) error("fileExists: NULL filename");
+	status = _access(path, 0);
+	if (status == 0) return true;
+	if (errno == EINVAL) error("fileExists: Invalid parameter");
+	return false;
+}
+
+Vector ReadEventsFromFile(string fileName) {
+	FILE* filepoint;
+	errno_t err;
+
+	if ((err = fopen_s(&filepoint, fileName, "rb")) != 0) {
+		// File could not be opened. filepoint was set to NULL
+		// error code is returned in err.
+		// error message can be retrieved with strerror(err);
+
+		error_msg("Nije moguće otvoriti fajl %s", fileName);
+	}
+	else {
+		// File was opened, filepoint can be used to read the stream.
+
+		Vector events = newVector();
+		size_t count;
+		fread(&count, sizeof count, 1, filepoint);
+		for (size_t i = 0; i < count; i++) {
+			Event e = ReadEvent(filepoint);
+			addVector(events, e);
+		}
+		fclose(filepoint);
+		return events;
+	}
+}
+
+size_t WriteStringToFile(FILE* filepoint, string outString) {
+	return fwrite(outString, sizeof outString[0], strlen(outString) + 1, filepoint);
+}
+
+void WriteEventToFile(FILE* filepoint, Event e) {
+	string eventName = getEventName(e);
+	string eventDescription = getEventDescription(e);
+	string eventLocation = getEventLocation(e);
+	string eventCategory = getEventCategory(e);
+	time_t eventTime = getEventTime(e);
+
+	WriteStringToFile(filepoint, eventName);
+	WriteStringToFile(filepoint, eventDescription);
+	WriteStringToFile(filepoint, eventLocation);
+	WriteStringToFile(filepoint, eventCategory);
+	fwrite(&eventTime, sizeof(time_t), 1, filepoint);
+}
+
+void SaveEventsToFile(Vector events, string fileName) {
+	FILE* filepoint;
+	errno_t err;
+
+	if ((err = fopen_s(&filepoint, fileName, "wb")) != 0) {
+		// File could not be opened. filepoint was set to NULL
+		// error code is returned in err.
+		// error message can be retrieved with strerror(err);
+
+		error_msg("Nije moguće otvoriti fajl %s", fileName);
+	}
+	else {
+		// File was opened, filepoint can be used to read the stream.
+
+		QuickSortVector(events, 0, sizeVector(events) - 1, CompareEventTimesDescending);
+		size_t count = sizeVector(events);
+		fwrite(&count, sizeof count, 1, filepoint);
+		for (size_t i = 0; i < count; i++) {
+			Event e = getVector(events, i);
+			WriteEventToFile(filepoint, e);
+		}
+
+		fclose(filepoint);
+	}
+}
+
+EventCategory ReadCategory(FILE* filepoint) {
+	string categoryName = ReadString(filepoint);
+
+	EventCategory cat = newEventCategory();
+	setEventCategoryName(cat, categoryName);
+
+	return cat;
+}
+
+Vector ReadCategoriesFromFile(string fileName) {
+	FILE* filepoint;
+	errno_t err;
+
+	if ((err = fopen_s(&filepoint, fileName, "rb")) != 0) {
+		// File could not be opened. filepoint was set to NULL
+		// error code is returned in err.
+		// error message can be retrieved with strerror(err);
+
+		error_msg("Nije moguće otvoriti fajl %s", fileName);
+	}
+	else {
+		// File was opened, filepoint can be used to read the stream.
+
+		Vector categories = newVector();
+		size_t count;
+		fread(&count, sizeof count, 1, filepoint);
+		for (size_t i = 0; i < count; i++) {
+			EventCategory e = ReadCategory(filepoint);
+			addVector(categories, e);
+		}
+		fclose(filepoint);
+		return categories;
+	}
+}
+
+void WriteCategoryToFile(FILE* filepoint, EventCategory cat) {
+	string categoryName = getEventCategoryName(cat);
+	WriteStringToFile(filepoint, categoryName);
+}
+
+void SaveCategoriesToFile(Vector categories, string fileName) {
+	FILE* filepoint;
+	errno_t err;
+
+	if ((err = fopen_s(&filepoint, fileName, "wb")) != 0) {
+		// File could not be opened. filepoint was set to NULL
+		// error code is returned in err.
+		// error message can be retrieved with strerror(err);
+
+		error_msg("Nije moguće otvoriti fajl %s", fileName);
+	}
+	else {
+		// File was opened, filepoint can be used to read the stream.
+
+		size_t count = sizeVector(categories);
+		fwrite(&count, sizeof count, 1, filepoint);
+		for (size_t i = 0; i < count; i++) {
+			EventCategory cat = getVector(categories, i);
+			WriteCategoryToFile(filepoint, cat);
+		}
+
+		fclose(filepoint);
+	}
+}
 
 /**
  * @fn	int fileToMap(string filename, Map map)
@@ -346,20 +533,6 @@ void cls(HANDLE hConsole) {
 	SetConsoleCursorPosition(hConsole, oldCordinates);
 }
 
-void advanceCursor(int count) {
-	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-	COORD cursorPosition;
-
-	// Get the current screen sb size and window position. 
-
-	if (!GetConsoleScreenBufferInfo(hStdout, &csbiInfo)) {
-		error_msg("GetConsoleScreenBufferInfo (%d)\n", GetLastError());
-	}
-	cursorPosition = csbiInfo.dwCursorPosition;
-	cursorPosition.Y += count;
-	SetConsoleCursorPosition(hStdout, cursorPosition);
-}
-
 void PrintLogo(void) {
 	// 38
 	COORD cursorPosition = { 0, 4 };
@@ -402,7 +575,7 @@ void loginAttempt(string* inUsername, string* inPassword) {
 
 	cWritten = PrintToConsole(prompt1);
 
-	*inUsername = readLine(stdin);
+	*inUsername = getLine();
 
 	++cursorPosition.Y;
 	SetConsoleCursorPosition(hStdout, cursorPosition);
@@ -614,6 +787,59 @@ void PrintStatusLine(const string format) {
 	SetConsoleCursorPosition(hStdout, position);
 }
 
+string ShowPrompt(const string title, const string footer, const string format, ...) {
+	// Hide the cursor inside the table.
+	CONSOLE_CURSOR_INFO info;
+	info.dwSize = 100;
+	info.bVisible = FALSE;
+	SetConsoleCursorInfo(hStdout, &info);
+
+	va_list args;
+	va_start(args, format);
+	int len = _vscprintf(format, args) + 1;
+	string buf = newArray(len, char);
+	vsprintf(buf, format, args);
+
+	system("cls");
+
+	PrintTitle(title);
+	PrintStatusLine(footer);
+
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	COORD sizeConsole;
+	COORD cursorPosition;
+
+	// Get the current screen sb size and window position. 
+
+	if (!GetConsoleScreenBufferInfo(hStdout, &csbi)) {
+		freeBlock(buf);
+		return NULL;
+	}
+	sizeConsole = csbi.dwSize;
+	cursorPosition.X = 0;
+	cursorPosition.Y = (sizeConsole.Y - 3) / 2;
+	SetConsoleCursorPosition(hStdout, cursorPosition);
+	PrintToConsoleFormatted(CENTER_ALIGN, buf);
+
+	// Variable for registering end.
+	BOOL done = FALSE;
+
+	string inputString = NULL;
+
+	while (!done) {
+		inputString = getLine();
+		if (strlen(inputString) != 0) {
+			done = TRUE;
+		}
+	}
+
+	// Show the cursor.
+	info.bVisible = TRUE;
+	SetConsoleCursorInfo(hStdout, &info);
+
+	return inputString;
+}
+
 int YesNoPrompt(const string title, const string format, ...) {
 	// Hide the cursor inside the table.
 	CONSOLE_CURSOR_INFO info;
@@ -821,6 +1047,19 @@ int CompareEventTimes(const void* p1, const void* p2) {
 	}
 }
 
+int CompareEventTimesDescending(const void* p1, const void* p2) {
+	Event first = (Event) p1;
+	Event second = (Event) p2;
+	time_t firstTime = getEventTime(first);
+	time_t secondTime = getEventTime(second);
+	if (firstTime == secondTime) {
+		return CompareEventNames(p1, p2);
+	}
+	else {
+		return (firstTime > secondTime) ? -1 : +1;
+	}
+}
+
 int CompareEventCategoryName(const void* p1, const void* p2) {
 	EventCategory first = (EventCategory) p1;
 	EventCategory second = (EventCategory) p2;
@@ -829,45 +1068,29 @@ int CompareEventCategoryName(const void* p1, const void* p2) {
 	return stringCompare(firstName, secondName);
 }
 
-int NewEventScreen(Table events, Table categories) {
-	string title = "Unos novog događaja";
-	system("cls");
-	PrintTitle(title);
-	advanceCursor(3);
-	PrintToConsole("\tNaziv događaja: ");
-	string eventName = readLine(stdin);
-	PrintToConsole("\tLokacija: ");
-	string eventLocation = readLine(stdin);
-
-	int day, month, year, hour, minute;
-	PrintToConsole("\tDatum (mora biti u obliku \"dan.mjesec.godina.\"): ");
-	scanf("%d.%d.%d.", &day, &month, &year);
-	PrintToConsole("\tVrijeme (mora biti u obliku \"sati:minuti\"): ");
-	scanf("%d:%d", &hour, &minute);
-	time_t eventTime;
-	struct tm dateTime = {
-		.tm_mday = day,
-		.tm_mon = month - 1,
-		.tm_year = year - 1900,
-		.tm_hour = hour,
-		.tm_min = minute,
-		.tm_isdst = -1
-	};
-	eventTime = mktime(&dateTime);
+string InputEventCategory(Table categories) {
+	// Save the cursor info.
+	CONSOLE_CURSOR_INFO oldInfo;
+	GetConsoleCursorInfo(hStdout, &oldInfo);
 
 	string categoryName;
-	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	COORD oldCordinates; // Save original coordinates.
-
-	// Get the console screen buffer info. 
-	if (!GetConsoleScreenBufferInfo(hStdout, &csbi)) {
-		//return 0;
-	}
-	oldCordinates = csbi.dwCursorPosition;
-
-	CHAR_INFO* chiBuffer = SaveScreenBuffer();
 
 	Table cpyTable = CloneTable(categories);
+
+	DWORD fdwMode, fdwOldMode;
+
+	// Turn off the line input and echo input modes 
+	if (!GetConsoleMode(hStdin, &fdwOldMode)) {
+		return 0;
+	}
+
+	fdwMode = fdwOldMode &
+		~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT);
+	if (!SetConsoleMode(hStdin, fdwMode)) {
+		return 0;
+	}
+
+	hideCursor();
 
 	// Variable for registering end.
 	BOOL done = FALSE;
@@ -880,7 +1103,11 @@ int NewEventScreen(Table events, Table categories) {
 
 	while (!done) {
 		if (!MainTable(cpyTable, &tableSelection, &registeredKeyCode)) {
-			return 0;
+			// Restore the original console mode. 
+			SetConsoleMode(hStdin, fdwOldMode);
+			// Restore the cursor.
+			SetConsoleCursorInfo(hStdout, &oldInfo);
+			return NULL;
 		}
 		switch (registeredKeyCode) {
 		case VK_RETURN:
@@ -892,15 +1119,88 @@ int NewEventScreen(Table events, Table categories) {
 	}
 	EventCategory chosenCategory = getVector(GetDataTable(categories), tableSelection);
 	categoryName = getEventCategoryName(chosenCategory);
+	FreeTable(cpyTable);
+
+	// Restore the original console mode. 
+	SetConsoleMode(hStdin, fdwOldMode);
+
+	// Restore the cursor.
+	SetConsoleCursorInfo(hStdout, &oldInfo);
+
+	return categoryName;
+}
+
+time_t InputEventTime(void) {
+	int day, month, year, hour, minute;
+	PrintToConsole("\tDatum (mora biti u obliku \"dan.mjesec.godina.\"): ");
+	string inputString = getLine();
+	sscanf(inputString, "%d.%d.%d.", &day, &month, &year);
+	//scanf("%d.%d.%d.", &day, &month, &year);
+	PrintToConsole("\tVrijeme (mora biti u obliku \"sati:minuti\"): ");
+	freeBlock(inputString);
+	inputString = getLine();
+	sscanf(inputString, "%d:%d", &hour, &minute);
+	//scanf("%d:%d", &hour, &minute);
+	// 
+	time_t eventTime;
+	struct tm dateTime = {
+		.tm_mday = day,
+		.tm_mon = month - 1,
+		.tm_year = year - 1900,
+		.tm_hour = hour,
+		.tm_min = minute,
+		.tm_isdst = -1
+	};
+	eventTime = mktime(&dateTime);
+	return eventTime;
+}
+
+int NewEventScreen(Table events, Table categories) {
+	string title = "Unos novog događaja";
+	system("cls");
+	PrintTitle(title);
+	advanceCursor(3);
+
+	PrintToConsole("\tNaziv događaja: ");
+	string eventName;
+	while ((eventName = getLine()) == NULL || strlen(eventName) == 0) {
+		advanceCursor(-1);
+		PrintToConsole("\tNaziv događaja: ");
+	}
+
+	PrintToConsole("\tLokacija: ");
+	string eventLocation;
+	while ((eventLocation = getLine()) == NULL || strlen(eventLocation) == 0) {
+		advanceCursor(-1);
+		PrintToConsole("\tLokacija: ");
+	}
+
+	time_t eventTime = InputEventTime();
+
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	COORD oldCordinates; // Save original coordinates.
+
+	// Get the console screen buffer info. 
+	if (!GetConsoleScreenBufferInfo(hStdout, &csbi)) {
+		return 0;
+	}
+	oldCordinates = csbi.dwCursorPosition;
+
+	CHAR_INFO* chiBuffer = SaveScreenBuffer();
+
+	string categoryName = InputEventCategory(categories);
 
 	RecoverScreenBuffer(chiBuffer);
-	getchar();
 	SetConsoleCursorPosition(hStdout, oldCordinates);
 
 	PrintToConsole("\tKategorija: %s\n", categoryName);
 
 	PrintToConsole("\tOpis: ");
-	string eventDescription = readLine(stdin);
+	string eventDescription;
+	while ((eventDescription = getLine()) == NULL || strlen(eventDescription) == 0) {
+		advanceCursor(-1);
+		PrintToConsole("\tOpis: ");
+	}
 
 	Event temp = newEvent();
 	setEventName(temp, eventName);
@@ -912,7 +1212,6 @@ int NewEventScreen(Table events, Table categories) {
 	Vector eventsVector = GetDataTable(events);
 	addVector(eventsVector, temp);
 
-	FreeTable(cpyTable);
 	return 1;
 }
 
@@ -952,7 +1251,172 @@ void SortEventsTable(Table t) {
 
 }
 
+int EditEvent(Table events, Table categories, int index) {
+	Vector data = GetDataTable(events);
+	Event event = getVector(data, index);
+
+	Menu menu = newMenu();
+	Vector menuVector = getMenuOptions(menu);
+	for (int i = 0; i < 5; i++) {
+		addVector(menuVector, eventFields[i]);
+	}
+	centerMenu(menu);
+	setHighlightAttributes(menu, HIGHLIGHT_ATTRIBUTES);
+	setCancelMenu(menu, TRUE);
+
+	hideCursor();
+
+	// Variable for registering end.
+	BOOL done = FALSE;
+
+	// Selected option inside the main menu.
+	int menuOption;
+
+	// String for input.
+	string inputString;
+
+	// For input time.
+	time_t inputTime;
+
+	while (!done) {
+		system("cls");
+		PrintTitle("Koje polje želite da mijenjate?");
+		PrintStatusLine(" ESC: Povratak. ");
+		if (!mainMenu(menu, &menuOption)) {
+			return 0;
+		}
+		switch (menuOption) {
+		case EDIT_EVENT_NAME:
+			inputString = ShowPrompt("Unesite novi naziv", " RETURN: Potvrdi.", "Naziv: ");
+			setEventName(event, inputString);
+			break;
+		case EDIT_EVENT_LOCATION:
+			inputString = ShowPrompt("Unesite novu lokaciju", " RETURN: Potvrdi.", "Lokacija: ");
+			setEventLocation(event, inputString);
+			break;
+		case EDIT_EVENT_CATEGORY:
+			inputString = InputEventCategory(categories);
+			setEventCategory(event, inputString);
+			break;
+		case EDIT_EVENT_TIME:
+			inputTime = InputEventTime();
+			setEventTime(event, inputTime);
+			break;
+		case EDIT_EVENT_DESCRIPTION:
+			inputString = ShowPrompt("Unesite novi opis", " RETURN: Potvrdi.", "Opis: ");
+			setEventDescription(event, inputString);
+			break;
+		case MENU_CANCEL:
+			done = TRUE;
+			break;
+		default:
+			break;
+		}
+	}
+	return 1;
+}
+
+int ShowEventDetails(Table events, Table categories, int index) {
+	Vector data = GetDataTable(events);
+	Event event = getVector(data, index);
+
+	struct tm newtime;
+	char buff[BUFSIZ];
+	time_t long_time = getEventTime(event);
+	errno_t err;
+
+	// Convert to local time.
+	err = localtime_s(&newtime, &long_time);
+	if (err) {
+		return 0;
+	}
+
+	if (!strftime(buff, sizeof buff, "%A %x %R", &newtime)) {
+		return 0;
+	}
+
+	string title = "Pregled detalja događaja";
+
+	DWORD fdwMode, fdwOldMode;
+
+	// Turn off the line input and echo input modes 
+	if (!GetConsoleMode(hStdin, &fdwOldMode)) {
+		showCursor();
+		return 0;
+	}
+
+	fdwMode = fdwOldMode &
+		~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT);
+	if (!SetConsoleMode(hStdin, fdwMode)) {
+		showCursor();
+		return 0;
+	}
+
+	// Variable for registering end.
+	BOOL done = FALSE;
+
+	// Registered event that has happend.
+	INPUT_RECORD inputEvent;
+
+	// Number of read characters.
+	DWORD cRead;
+
+	while (!done) {
+		system("cls");
+
+		PrintTitle(title);
+		advanceCursor(3);
+		PrintToConsole("\tNaziv: %s\n", getEventName(event));
+		PrintToConsole("\tLokacija: %s\n", getEventLocation(event));
+		PrintToConsole("\tKategorija: %s\n", getEventCategory(event));
+		PrintToConsole("\tDatum i vrijeme: %s\n", buff);
+		PrintToConsole("\tOpis: %s", getEventDescription(event));
+		PrintStatusLine(" ESC: Povratak. | F9: Izmjena događaja. ");
+
+		hideCursor();
+		system("pause>nul");
+		if (WaitForSingleObject(hStdin, INFINITE) == WAIT_OBJECT_0)  /* if kbhit */
+		{
+			/* Get the input event */
+			ReadConsoleInput(hStdin, &inputEvent, 1, &cRead);
+
+			/* Only respond to key release events */
+			if (inputEvent.EventType == KEY_EVENT)
+				switch (inputEvent.Event.KeyEvent.wVirtualKeyCode) {
+				case VK_ESCAPE:
+					done = TRUE;
+					break;
+				case VK_F9:
+					if (!EditEvent(events, categories, index)) {
+						return 0;
+					}
+					SaveEventsToFile(GetDataTable(events), fileEvents);
+					break;
+				default:
+					break;
+				}
+		}
+	}
+
+	showCursor();
+	return 1;
+}
+
 int EventsHandling(Table events, Table categories) {
+	DWORD fdwMode, fdwOldMode;
+
+	// Turn off the line input and echo input modes 
+	if (!GetConsoleMode(hStdin, &fdwOldMode)) {
+		return 0;
+	}
+
+	fdwMode = fdwOldMode &
+		~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT);
+	if (!SetConsoleMode(hStdin, fdwMode)) {
+		return 0;
+	}
+
+	hideCursor();
 
 	// Variable for registering end.
 	BOOL done = FALSE;
@@ -965,6 +1429,7 @@ int EventsHandling(Table events, Table categories) {
 
 	while (!done) {
 		if (!MainTable(events, &tableSelection, &registeredKeyCode)) {
+			showCursor();
 			return 0;
 		}
 		switch (registeredKeyCode) {
@@ -972,8 +1437,13 @@ int EventsHandling(Table events, Table categories) {
 			done = TRUE;
 			break;
 		case VK_RETURN: // Show details of the selected event.
-			system("cls");
-			PrintToConsole("Detalji");
+			if (isEmptyVector(GetDataTable(events))) {
+				break;
+			}
+			if (!ShowEventDetails(events, categories, tableSelection)) {
+				showCursor();
+				return 0;
+			}
 			break;
 		case VK_DELETE: // Delete selected event;
 			if (isEmptyVector(GetDataTable(events))) {
@@ -983,17 +1453,21 @@ int EventsHandling(Table events, Table categories) {
 				removeVector(GetDataTable(events), tableSelection);
 			}
 			tableSelection = 0;
+
+			SaveEventsToFile(GetDataTable(events), fileEvents);
+
 			break;
 		case VK_F9: // New event.
 			if (isEmptyVector(GetDataTable(categories))) {
 				system("cls");
-				hideCursor();
 				PrintToConsoleFormatted(CENTER_ALIGN | MIDDLE, "Mora postojati bar jedna kategorija događaja u evidenciji.");
 				system("pause>nul");
-				showCursor();
 				break;
 			}
 			NewEventScreen(events, categories);
+
+			SaveEventsToFile(GetDataTable(events), fileEvents);
+
 			break;
 		case VK_F10: // Sort the list.
 			SortEventsTable(events);
@@ -1002,6 +1476,11 @@ int EventsHandling(Table events, Table categories) {
 			break;
 		}
 	}
+
+	// Restore the original console mode. 
+	SetConsoleMode(hStdin, fdwOldMode);
+
+	showCursor();
 	return 1;
 }
 
@@ -1012,7 +1491,7 @@ void NewCategoryScreen(Table table) {
 	advanceCursor(3);
 	PrintToConsole("\tNaziv nove kategorije događaja: ");
 
-	string categoryName = readLine(stdin);
+	string categoryName = getLine();
 
 	EventCategory cat = newEventCategory();
 	setEventCategoryName(cat, categoryName);
@@ -1022,6 +1501,19 @@ void NewCategoryScreen(Table table) {
 }
 
 int CategoriesHandling(Table table) {
+	DWORD fdwMode, fdwOldMode;
+
+	// Turn off the line input and echo input modes 
+	if (!GetConsoleMode(hStdin, &fdwOldMode)) {
+		return 0;
+	}
+
+	fdwMode = fdwOldMode &
+		~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT);
+	if (!SetConsoleMode(hStdin, fdwMode)) {
+		return 0;
+	}
+	hideCursor();
 
 	// Variable for registering end.
 	BOOL done = FALSE;
@@ -1034,15 +1526,12 @@ int CategoriesHandling(Table table) {
 
 	while (!done) {
 		if (!MainTable(table, &tableSelection, &registeredKeyCode)) {
+			showCursor();
 			return 0;
 		}
 		switch (registeredKeyCode) {
 		case VK_ESCAPE: // Exit from table.
 			done = TRUE;
-			break;
-		case VK_RETURN: // Show details of the selected event.
-			system("cls");
-			PrintToConsole("Detalji");
 			break;
 		case VK_DELETE: // Delete selected event category;
 			if (isEmptyVector(GetDataTable(table))) {
@@ -1052,40 +1541,49 @@ int CategoriesHandling(Table table) {
 				removeVector(GetDataTable(table), tableSelection);
 			}
 			tableSelection = 0;
+			SaveCategoriesToFile(GetDataTable(table), fileCategories);
 			break;
 		case VK_F9: // New event.
 			NewCategoryScreen(table);
-			break;
-		case VK_F10: // Sort the list.
+			SaveCategoriesToFile(GetDataTable(table), fileCategories);
 			break;
 		default:
 			break;
 		}
 	}
+	// Restore the original console mode. 
+	SetConsoleMode(hStdin, fdwOldMode);
+
+	showCursor();
 	return 1;
 }
 
 int main(void) {
 	windowSetup();
-	Vector events = newVector();
-	Event e;
+	Vector events;
+	if (fileExists(fileEvents)) {
+		events = ReadEventsFromFile(fileEvents);
+	}
+	else {
+		events = newVector();
+	}
 
-	/*for (int i = 0; i < 45; i++) {
-		e = newEvent();
-		StringBuffer sb = newStringBuffer();
-		appendString(sb, "name");
-		char buffer[10];
-		_itoa(i, buffer, 10);
-		appendString(sb, buffer);
-		setEventName(e, getString(sb));
-		setEventLocation(e, "location");
-		setEventCategory(e, "category");
-		time_t long_time;
-		time(&long_time);
-		long_time += 10000 * i;
-		setEventTime(e, long_time);
-		addVector(events, e);
-	}*/
+	Vector categories;
+	if (fileExists(fileCategories)) {
+		categories = ReadCategoriesFromFile(fileCategories);
+	}
+	else {
+		categories = newVector();
+		EventCategory tmpCat;
+		string tmpString;
+		for (size_t i = 0; i < 3; i++) {
+			tmpCat = newEventCategory();
+			tmpString = copyString(categoriesPredefined[i]);
+			setEventCategoryName(tmpCat, tmpString);
+			addVector(categories, tmpCat);
+		}
+		SaveCategoriesToFile(categories, fileCategories);
+	}
 
 	Menu menu = newMenu();
 	Vector menuVector = getMenuOptions(menu);
@@ -1097,37 +1595,9 @@ int main(void) {
 
 
 	Table eventsTable = NewTable();
+	freeVector(GetDataTable(eventsTable));
 	SetDataTable(eventsTable, events);
-	/*Vector columns = newVector();
-	for (int i = 0; i < 45; i++) {
-		Vector record = newVector();
-		addVector(record, getEventName(getVector(events, i)));
-		addVector(record, getEventLocation(getVector(events, i)));
-		addVector(record, getEventCategory(getVector(events, i)));
 
-		struct tm newtime;
-		char buff[70];
-		time_t long_time = getEventTime(getVector(events, i));
-		errno_t err;
-
-		// Convert to local time.
-		err = localtime_s(&newtime, &long_time);
-		if (err) {
-			error_msg("Invalid argument to localtime_s.");
-		}
-
-		if (!strftime(buff, sizeof buff, "%A %x %R", &newtime)) {
-			error_msg("strftime");
-		}
-
-		string tmp = copyString(buff);
-
-		addVector(record, tmp);
-
-		addVector(columns, record);
-	}
-	SetColumnsTable(eventsTable, columns);
-	*/
 	Vector header = newVector();
 	for (int i = 0; i < 4; i++) {
 		string tmp = copyString(eventsHeader[i]);
@@ -1148,6 +1618,8 @@ int main(void) {
 
 
 	Table categoriesTable = NewTable();
+	freeVector(GetDataTable(categoriesTable));
+	SetDataTable(categoriesTable, categories);
 	SetHighAttrTable(categoriesTable, HIGHLIGHT_ATTRIBUTES);
 	SetToStringVectorFnTable(categoriesTable, EventCategoryToVector);
 	SetFreeStringVectorFnTable(categoriesTable, FreeEventCategoryStringVector);

@@ -5,6 +5,8 @@
 #include "vector.h"
 #include <Windows.h>
 
+#define MENU_CANCEL -1
+
 typedef struct MenuCDT* Menu;
 
 Menu newMenu(void);
