@@ -6,6 +6,7 @@
 
 #include "Event.h"
 #include "cslib.h"
+#include "strlib.h"
 
 /**
  * @struct	EventCDT
@@ -90,4 +91,62 @@ time_t getEventTime(Event event)
 void setEventTime(Event event, time_t time)
 {
 	event->time = time;
+}
+
+int CompareEventNames(const void* p1, const void* p2) {
+	Event first = (Event) p1;
+	Event second = (Event) p2;
+	string firstName = getEventName(first);
+	string secondName = getEventName(second);
+	return stringCompare(firstName, secondName);
+}
+
+int CompareEventLocations(const void* p1, const void* p2) {
+	Event first = (Event) p1;
+	Event second = (Event) p2;
+	string firstLocation = getEventLocation(first);
+	string secondLocation = getEventLocation(second);
+	int res = stringCompare(firstLocation, secondLocation);
+	if (res == 0) {
+		res = CompareEventNames(p1, p2);
+	}
+	return res;
+}
+
+int CompareEventCategories(const void* p1, const void* p2) {
+	Event first = (Event) p1;
+	Event second = (Event) p2;
+	string firstCategory = getEventCategory(first);
+	string secondCategory = getEventCategory(second);
+	int res = stringCompare(firstCategory, secondCategory);
+	if (res == 0) {
+		res = CompareEventNames(p1, p2);
+	}
+	return res;
+}
+
+int CompareEventTimes(const void* p1, const void* p2) {
+	Event first = (Event) p1;
+	Event second = (Event) p2;
+	time_t firstTime = getEventTime(first);
+	time_t secondTime = getEventTime(second);
+	if (firstTime == secondTime) {
+		return CompareEventNames(p1, p2);
+	}
+	else {
+		return (firstTime < secondTime) ? -1 : +1;
+	}
+}
+
+int CompareEventTimesDescending(const void* p1, const void* p2) {
+	Event first = (Event) p1;
+	Event second = (Event) p2;
+	time_t firstTime = getEventTime(first);
+	time_t secondTime = getEventTime(second);
+	if (firstTime == secondTime) {
+		return CompareEventNames(p1, p2);
+	}
+	else {
+		return (firstTime > secondTime) ? -1 : +1;
+	}
 }

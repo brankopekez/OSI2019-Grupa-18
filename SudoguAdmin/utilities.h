@@ -4,6 +4,9 @@
 #include <Windows.h>
 #include "cslib.h"
 #include "vector.h"
+#include "Event.h"
+#include "EventCategory.h"
+#include <io.h>
 
 /**
  * @enum	F_COLOR
@@ -63,6 +66,8 @@ enum FormatOption {
 
 void ErrorExit(LPSTR lpszFunction);
 
+void error_msg(const string format, ...);
+
 int clear(int startY, int endY);
 
 LPWSTR GetFormattedMessage(LPWSTR pMessage, ...);
@@ -76,5 +81,57 @@ void hideCursor(void);
 void showCursor(void);
 
 void QuickSortVector(Vector vector, int begin, int end, CompareFn compareFn);
+
+void advanceCursor(int count);
+
+char* ReadString(FILE* inf);
+
+Event ReadEvent(FILE* filepoint);
+
+bool fileExists(string path);
+
+Vector ReadEventsFromFile(string fileName);
+
+size_t WriteStringToFile(FILE* filepoint, string outString);
+
+void WriteEventToFile(FILE* filepoint, Event e);
+
+void SaveEventsToFile(Vector events, string fileName);
+
+EventCategory ReadCategory(FILE* filepoint);
+
+Vector ReadCategoriesFromFile(string fileName);
+
+void WriteCategoryToFile(FILE* filepoint, EventCategory cat);
+
+void SaveCategoriesToFile(Vector categories, string fileName);
+
+void clearCordinates(int startX, int startY, int height, int width);
+
+void cls(HANDLE hConsole);
+
+Vector EventToVector(Event event);
+
+void FreeEventStringVector(Vector vector);
+
+Vector EventCategoryToVector(EventCategory category);
+
+void FreeEventCategoryStringVector(Vector vector);
+
+void PrintTitle(const string title);
+
+void PrintStatusLine(const string format);
+
+void SetCursorPositionMiddle();
+
+string ShowPrompt(const string title, const string footer, const string format, ...);
+
+int YesNoPrompt(const string title, const string format, ...);
+
+CHAR_INFO* SaveScreenBuffer(void);
+
+int RecoverScreenBuffer(CHAR_INFO* chiBuffer);
+
+void SetConsoleWindowSize(int x, int y);
 
 #endif // !_utilities_h

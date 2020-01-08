@@ -85,8 +85,9 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>/source-charset:windows-1250 /execution-charset:windows-1250 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -111,8 +112,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>/source-charset:windows-1250 /execution-charset:windows-1250 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -138,7 +140,40 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\SudoguAdmin\bst.c" />
+    <ClCompile Include="..\SudoguAdmin\cmpfn.c" />
+    <ClCompile Include="..\SudoguAdmin\cslib.c" />
+    <ClCompile Include="..\SudoguAdmin\Event.c" />
+    <ClCompile Include="..\SudoguAdmin\EventCategory.c" />
+    <ClCompile Include="..\SudoguAdmin\generic.c" />
+    <ClCompile Include="..\SudoguAdmin\iterator.c" />
+    <ClCompile Include="..\SudoguAdmin\map.c" />
+    <ClCompile Include="..\SudoguAdmin\Menu.c" />
+    <ClCompile Include="..\SudoguAdmin\simpio.c" />
+    <ClCompile Include="..\SudoguAdmin\strbuf.c" />
+    <ClCompile Include="..\SudoguAdmin\strlib.c" />
+    <ClCompile Include="..\SudoguAdmin\Table.c" />
+    <ClCompile Include="..\SudoguAdmin\utilities.c" />
+    <ClCompile Include="..\SudoguAdmin\vector.c" />
     <ClCompile Include="SudoguUser.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\SudoguAdmin\bst.h" />
+    <ClInclude Include="..\SudoguAdmin\cmpfn.h" />
+    <ClInclude Include="..\SudoguAdmin\cslib.h" />
+    <ClInclude Include="..\SudoguAdmin\Event.h" />
+    <ClInclude Include="..\SudoguAdmin\EventCategory.h" />
+    <ClInclude Include="..\SudoguAdmin\generic.h" />
+    <ClInclude Include="..\SudoguAdmin\iterator.h" />
+    <ClInclude Include="..\SudoguAdmin\itertype.h" />
+    <ClInclude Include="..\SudoguAdmin\map.h" />
+    <ClInclude Include="..\SudoguAdmin\Menu.h" />
+    <ClInclude Include="..\SudoguAdmin\simpio.h" />
+    <ClInclude Include="..\SudoguAdmin\strbuf.h" />
+    <ClInclude Include="..\SudoguAdmin\strlib.h" />
+    <ClInclude Include="..\SudoguAdmin\Table.h" />
+    <ClInclude Include="..\SudoguAdmin\utilities.h" />
+    <ClInclude Include="..\SudoguAdmin\vector.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

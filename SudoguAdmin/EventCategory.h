@@ -75,4 +75,6 @@ string getEventCategoryName(EventCategory category);
 
 void setEventCategoryName(EventCategory category, string name);
 
+int CompareEventCategoryName(const void* p1, const void* p2);
+
 #endif // !_event_category_h

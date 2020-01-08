@@ -6,6 +6,7 @@
 
 #include "EventCategory.h"
 #include "cslib.h"
+#include "strlib.h"
 
 /**
  * @struct	EventCategoryCDT
@@ -43,4 +44,12 @@ string getEventCategoryName(EventCategory category)
 void setEventCategoryName(EventCategory category, string name)
 {
 	category->name = name;
+}
+
+int CompareEventCategoryName(const void* p1, const void* p2) {
+	EventCategory first = (EventCategory) p1;
+	EventCategory second = (EventCategory) p2;
+	string firstName = getEventCategoryName(first);
+	string secondName = getEventCategoryName(second);
+	return stringCompare(firstName, secondName);
 }

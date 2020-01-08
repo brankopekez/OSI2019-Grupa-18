@@ -192,4 +192,14 @@ time_t getEventTime(Event event);
 
 void setEventTime(Event event, time_t time);
 
+int CompareEventNames(const void* p1, const void* p2);
+
+int CompareEventLocations(const void* p1, const void* p2);
+
+int CompareEventCategories(const void* p1, const void* p2);
+
+int CompareEventTimes(const void* p1, const void* p2);
+
+int CompareEventTimesDescending(const void* p1, const void* p2);
+
 #endif // !_event_h
