@@ -407,6 +407,11 @@ string InputEventCategory(Table categories) {
 	string categoryName;
 
 	Table cpyTable = CloneTable(categories);
+	freeVector(GetFooterTable(categories));
+	Vector footer = newVector();
+	string tmp = copyString(" RETURN: Izaberi kategoriju.");
+	addVector(footer, tmp);
+	SetFooterTable(categories, footer);
 
 	DWORD fdwMode, fdwOldMode;
 
@@ -450,6 +455,7 @@ string InputEventCategory(Table categories) {
 	}
 	EventCategory chosenCategory = getVector(GetDataTable(categories), tableSelection);
 	categoryName = getEventCategoryName(chosenCategory);
+	freeBlock(tmp);
 	FreeTable(cpyTable);
 
 	// Restore the original console mode. 

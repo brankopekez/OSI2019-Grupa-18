@@ -339,3 +339,5 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 /SudoguAdmin/events.dat
+/SudoguUser/categories.dat
+/SudoguUser/events.dat

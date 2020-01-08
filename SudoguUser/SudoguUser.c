@@ -55,10 +55,9 @@ string categoriesHeader[1] = {
 	"Naziv kategorije događaja"
 };
 
-string categoriesFooter[3] = {
-	"ESC: Izlaz.",
-	"DELETE: Obriši kategoriju.",
-	"F9: Dodaj novu kategoriju.",
+string categoriesFooter[2] = {
+	"ESC: Nazad.",
+	"RETURN: Izaberi kategoriju."
 };
 
 enum EVENTS_HEADER_OPTIONS {
@@ -105,14 +104,12 @@ const int windowSizeY = 33;
 
 void windowSetup(void);
 
-string InputEventCategory(Table categories) {
+string InputEventCategory(Table categories, int *tableSelection) {
 	// Save the cursor info.
 	CONSOLE_CURSOR_INFO oldInfo;
 	GetConsoleCursorInfo(hStdout, &oldInfo);
 
 	string categoryName;
-
-	Table cpyTable = CloneTable(categories);
 
 	DWORD fdwMode, fdwOldMode;
 
@@ -132,32 +129,39 @@ string InputEventCategory(Table categories) {
 	// Variable for registering end.
 	BOOL done = FALSE;
 
-	// Selected index inside the table.
-	int tableSelection = 0;
-
 	// Key code that was registered inside the table.
 	WORD registeredKeyCode;
 
 	while (!done) {
-		if (!MainTable(cpyTable, &tableSelection, &registeredKeyCode)) {
+		if (!MainTable(categories, tableSelection, &registeredKeyCode)) {
 			// Restore the original console mode. 
 			SetConsoleMode(hStdin, fdwOldMode);
 			// Restore the cursor.
 			SetConsoleCursorInfo(hStdout, &oldInfo);
-			return NULL;
+			error_msg("InputEventCategory::MainTable");
 		}
 		switch (registeredKeyCode) {
-		case VK_RETURN:
+		case VK_ESCAPE:
+			*tableSelection = -1;
 			done = TRUE;
+			break;
+		case VK_RETURN:
+			if (!isEmptyVector(GetDataTable(categories))) {
+				done = TRUE;
+			}
 			break;
 		default:
 			break;
 		}
 	}
-	EventCategory chosenCategory = getVector(GetDataTable(categories), tableSelection);
-	categoryName = getEventCategoryName(chosenCategory);
-	FreeTable(cpyTable);
-
+	if (*tableSelection != -1) {
+		EventCategory chosenCategory = getVector(GetDataTable(categories), *tableSelection);
+		categoryName = getEventCategoryName(chosenCategory);
+	}
+	else {
+		categoryName = NULL;
+	}
+	
 	// Restore the original console mode. 
 	SetConsoleMode(hStdin, fdwOldMode);
 
@@ -341,33 +345,39 @@ int EventsHandling(Table events) {
 	return 1;
 }
 
-typedef int (*FilterFn)(void*);
-
-int IsTodaysEvent(Event event) {
-	time_t now;
-	time(&now);
-
-	struct tm tmNow;
-	tmNow = *localtime(&now);
-
+int IsTodaysEvent(const void* p1, const void* p2) {
+	Event event = (Event) p1;
+	struct tm* tmNow = (struct tm*) p2;
 	time_t eventTime = getEventTime(event);
 	struct tm tmEvent;
 	tmEvent = *localtime(&eventTime);
 
-	if (tmNow.tm_year == tmEvent.tm_year
-		&& tmNow.tm_yday == tmEvent.tm_yday) {
-		return 1;
+	if (tmNow->tm_year == tmEvent.tm_year
+		&& tmNow->tm_yday == tmEvent.tm_yday) {
+		return 0;
 	}
 	else {
-		return 0;
+		return 1;
 	}
 }
 
-Vector FilterVector(Vector old, FilterFn filterFn) {
+int IsCategoryEvent(const void* p1, const void* p2) {
+	Event event = (Event) p1;
+	string categoryToCompareTo = (string) p2;
+	string eventCategory = getEventCategory(event);
+	if (stringCompare(eventCategory, categoryToCompareTo) == 0) {
+		return 0;
+	}
+	else {
+		return 1;
+	}
+}
+
+Vector FilterVector(Vector old, CompareFn cmpFn, void* toCmpTo) {
 	Vector new = newVector();
-	for (size_t i = 0; i < sizeVector(old); i++) {
+	for (int i = 0; i < sizeVector(old); i++) {
 		void* record = getVector(old, i);
-		if (filterFn(record)) {
+		if (cmpFn(record, toCmpTo) == 0) {
 			addVector(new, record);
 		}
 	}
@@ -377,10 +387,49 @@ Vector FilterVector(Vector old, FilterFn filterFn) {
 int ShowTodaysEvents(Table eventsTable) {
 	Table filteredTable = CloneTable(eventsTable);
 	Vector eventsVector = GetDataTable(filteredTable);
-	Vector filteredVector = FilterVector(eventsVector, IsTodaysEvent);
+
+	time_t now;
+	time(&now);
+	struct tm tmNow;
+	tmNow = *localtime(&now);
+
+	Vector filteredVector = FilterVector(eventsVector, IsTodaysEvent, &tmNow);
 	freeVector(eventsVector);
 	SetDataTable(filteredTable, filteredVector);
-	return EventsHandling(filteredTable);
+	int res = EventsHandling(filteredTable);
+	FreeTable(filteredTable);
+	return res;
+}
+
+int ShowCategoryEvents(Table eventsTable, Table categoriesTable) {
+	Table filteredTable = CloneTable(eventsTable);
+	Vector eventsVector = GetDataTable(filteredTable);
+
+	// Variable for registering end.
+	BOOL done = FALSE;
+
+	// Selected index inside the table.
+	int tableSelection = 0;
+
+	// Returning value.
+	int returnValue = 1;
+
+	while (!done) {
+		string selectedCategory = InputEventCategory(categoriesTable, &tableSelection);
+		if (selectedCategory != NULL && tableSelection != -1) {
+			Vector filteredVector = FilterVector(eventsVector, IsCategoryEvent, selectedCategory);
+			SetDataTable(filteredTable, filteredVector);
+			returnValue = EventsHandling(filteredTable);
+			freeVector(filteredVector);
+		}
+		else {
+			done = TRUE;
+		}
+	}
+
+	SetDataTable(filteredTable, eventsVector);
+	FreeTable(filteredTable);
+	return returnValue;
 }
 
 int main(void) {
@@ -446,7 +495,7 @@ int main(void) {
 	}
 	SetHeaderTable(categoriesTable, header);
 	header = newVector();
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 2; i++) {
 		string tmp = copyString(categoriesFooter[i]);
 		addVector(header, tmp);
 	}
@@ -473,9 +522,9 @@ int main(void) {
 			}
 			break;
 		case MENU_CATEGORY_EVENTS:
-			/*if (!ShowCategoryEvents(eventsTable)) {
+			if (!ShowCategoryEvents(eventsTable, categoriesTable)) {
 				error_msg("Nije moguce prikazati dogadjaje.");
-			}*/
+			}
 			break;
 		case MENU_FUTURE_EVENTS:
 			/*if (!ShowFutureEvents(eventsTable)) {
