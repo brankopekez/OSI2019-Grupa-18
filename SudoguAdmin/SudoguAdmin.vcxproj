@@ -90,10 +90,12 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalOptions>/source-charset:windows-1250 /execution-charset:windows-1250 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>C:\Users\Pynikleois\source\repos\Sudogu\CommonFiles\include;C:\Users\Pynikleois\source\repos\Sudogu\CommonFiles\cslib\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -117,12 +119,14 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalOptions>/source-charset:windows-1250 /execution-charset:windows-1250 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>C:\Users\Pynikleois\source\repos\Sudogu\CommonFiles\include;C:\Users\Pynikleois\source\repos\Sudogu\CommonFiles\cslib\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -142,40 +146,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="bst.c" />
-    <ClCompile Include="cmpfn.c" />
-    <ClCompile Include="cslib.c" />
-    <ClCompile Include="Event.c" />
-    <ClCompile Include="EventCategory.c" />
-    <ClCompile Include="generic.c" />
-    <ClCompile Include="iterator.c" />
-    <ClCompile Include="map.c" />
-    <ClCompile Include="Menu.c" />
-    <ClCompile Include="simpio.c" />
-    <ClCompile Include="strbuf.c" />
-    <ClCompile Include="strlib.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\bst.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\cmpfn.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\cslib.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\generic.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\iterator.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\map.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\simpio.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\strbuf.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\strlib.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\utilities.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\vector.c" />
+    <ClCompile Include="..\CommonFiles\src\Event.c" />
+    <ClCompile Include="..\CommonFiles\src\EventCategory.c" />
+    <ClCompile Include="..\CommonFiles\src\Menu.c" />
+    <ClCompile Include="..\CommonFiles\src\Table.c" />
     <ClCompile Include="SudoguAdmin.c" />
-    <ClCompile Include="Table.c" />
-    <ClCompile Include="utilities.c" />
-    <ClCompile Include="vector.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="bst.h" />
-    <ClInclude Include="cmpfn.h" />
-    <ClInclude Include="cslib.h" />
-    <ClInclude Include="Event.h" />
-    <ClInclude Include="EventCategory.h" />
-    <ClInclude Include="generic.h" />
-    <ClInclude Include="iterator.h" />
-    <ClInclude Include="itertype.h" />
-    <ClInclude Include="map.h" />
-    <ClInclude Include="Menu.h" />
-    <ClInclude Include="simpio.h" />
-    <ClInclude Include="strbuf.h" />
-    <ClInclude Include="strlib.h" />
-    <ClInclude Include="Table.h" />
-    <ClInclude Include="utilities.h" />
-    <ClInclude Include="vector.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\accounts.txt">
@@ -190,6 +176,24 @@
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </DeploymentContent>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\CommonFiles\cslib\include\bst.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\cmpfn.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\cslib.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\generic.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\iterator.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\itertype.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\map.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\simpio.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\strbuf.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\strlib.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\utilities.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\vector.h" />
+    <ClInclude Include="..\CommonFiles\include\Event.h" />
+    <ClInclude Include="..\CommonFiles\include\EventCategory.h" />
+    <ClInclude Include="..\CommonFiles\include\Menu.h" />
+    <ClInclude Include="..\CommonFiles\include\Table.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

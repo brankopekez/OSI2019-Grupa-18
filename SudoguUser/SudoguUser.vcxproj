@@ -88,10 +88,12 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalOptions>/source-charset:windows-1250 /execution-charset:windows-1250 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>C:\Users\Pynikleois\source\repos\Sudogu\CommonFiles\include;C:\Users\Pynikleois\source\repos\Sudogu\CommonFiles\cslib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -115,12 +117,14 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalOptions>/source-charset:windows-1250 /execution-charset:windows-1250 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>C:\Users\Pynikleois\source\repos\Sudogu\CommonFiles\include;C:\Users\Pynikleois\source\repos\Sudogu\CommonFiles\cslib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -140,44 +144,44 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\SudoguAdmin\bst.c" />
-    <ClCompile Include="..\SudoguAdmin\cmpfn.c" />
-    <ClCompile Include="..\SudoguAdmin\cslib.c" />
-    <ClCompile Include="..\SudoguAdmin\Event.c" />
-    <ClCompile Include="..\SudoguAdmin\EventCategory.c" />
-    <ClCompile Include="..\SudoguAdmin\generic.c" />
-    <ClCompile Include="..\SudoguAdmin\iterator.c" />
-    <ClCompile Include="..\SudoguAdmin\map.c" />
-    <ClCompile Include="..\SudoguAdmin\Menu.c" />
-    <ClCompile Include="..\SudoguAdmin\simpio.c" />
-    <ClCompile Include="..\SudoguAdmin\strbuf.c" />
-    <ClCompile Include="..\SudoguAdmin\strlib.c" />
-    <ClCompile Include="..\SudoguAdmin\Table.c" />
-    <ClCompile Include="..\SudoguAdmin\utilities.c" />
-    <ClCompile Include="..\SudoguAdmin\vector.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\bst.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\cmpfn.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\cslib.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\generic.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\iterator.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\map.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\simpio.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\strbuf.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\strlib.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\utilities.c" />
+    <ClCompile Include="..\CommonFiles\cslib\src\vector.c" />
+    <ClCompile Include="..\CommonFiles\src\Event.c" />
+    <ClCompile Include="..\CommonFiles\src\EventCategory.c" />
+    <ClCompile Include="..\CommonFiles\src\Menu.c" />
+    <ClCompile Include="..\CommonFiles\src\Table.c" />
     <ClCompile Include="SudoguUser.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\SudoguAdmin\bst.h" />
-    <ClInclude Include="..\SudoguAdmin\cmpfn.h" />
-    <ClInclude Include="..\SudoguAdmin\cslib.h" />
-    <ClInclude Include="..\SudoguAdmin\Event.h" />
-    <ClInclude Include="..\SudoguAdmin\EventCategory.h" />
-    <ClInclude Include="..\SudoguAdmin\generic.h" />
-    <ClInclude Include="..\SudoguAdmin\iterator.h" />
-    <ClInclude Include="..\SudoguAdmin\itertype.h" />
-    <ClInclude Include="..\SudoguAdmin\map.h" />
-    <ClInclude Include="..\SudoguAdmin\Menu.h" />
-    <ClInclude Include="..\SudoguAdmin\simpio.h" />
-    <ClInclude Include="..\SudoguAdmin\strbuf.h" />
-    <ClInclude Include="..\SudoguAdmin\strlib.h" />
-    <ClInclude Include="..\SudoguAdmin\Table.h" />
-    <ClInclude Include="..\SudoguAdmin\utilities.h" />
-    <ClInclude Include="..\SudoguAdmin\vector.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\accounts.txt" />
     <Text Include="..\city.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\CommonFiles\cslib\include\bst.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\cmpfn.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\cslib.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\generic.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\iterator.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\itertype.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\map.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\simpio.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\strbuf.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\strlib.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\utilities.h" />
+    <ClInclude Include="..\CommonFiles\cslib\include\vector.h" />
+    <ClInclude Include="..\CommonFiles\include\Event.h" />
+    <ClInclude Include="..\CommonFiles\include\EventCategory.h" />
+    <ClInclude Include="..\CommonFiles\include\Menu.h" />
+    <ClInclude Include="..\CommonFiles\include\Table.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

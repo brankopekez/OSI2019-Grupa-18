@@ -12,21 +12,23 @@
 #include <locale.h>
 #include <io.h>
 
+// CSLib headers
+#include "cslib.h"
+#include "map.h"
+#include "iterator.h"
+#include "simpio.h"
+#include "cmpfn.h"
+#include "strlib.h"
+#include "strbuf.h"
+#include "generic.h"
+#include "utilities.h"
+#include "vector.h"
+
 // Custom headers
-#include "../SudoguAdmin/cslib.h"
-#include "../SudoguAdmin/map.h"
-#include "../SudoguAdmin/iterator.h"
-#include "../SudoguAdmin/simpio.h"
-#include "../SudoguAdmin/cmpfn.h"
-#include "../SudoguAdmin/strlib.h"
-#include "../SudoguAdmin/strbuf.h"
-#include "../SudoguAdmin/generic.h"
-#include "../SudoguAdmin/EventCategory.h"
-#include "../SudoguAdmin/Event.h"
-#include "../SudoguAdmin/vector.h"
-#include "../SudoguAdmin/Menu.h"
-#include "../SudoguAdmin/utilities.h"
-#include "../SudoguAdmin/Table.h"
+#include "EventCategory.h"
+#include "Event.h"
+#include "Menu.h"
+#include "Table.h"
 
 /** @brief	The array of menu options. */
 string menuOptions[5] = {

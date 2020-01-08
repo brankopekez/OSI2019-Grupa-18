@@ -18,101 +18,51 @@
     <ClCompile Include="SudoguUser.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\SudoguAdmin\Event.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\bst.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\SudoguAdmin\EventCategory.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\cmpfn.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\SudoguAdmin\bst.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\cslib.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\SudoguAdmin\cmpfn.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\generic.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\SudoguAdmin\cslib.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\iterator.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\SudoguAdmin\generic.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\map.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\SudoguAdmin\iterator.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\simpio.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\SudoguAdmin\map.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\strbuf.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\SudoguAdmin\Menu.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\strlib.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\SudoguAdmin\simpio.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\utilities.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\SudoguAdmin\strbuf.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\vector.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\SudoguAdmin\strlib.c">
+    <ClCompile Include="..\CommonFiles\src\Event.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\SudoguAdmin\Table.c">
+    <ClCompile Include="..\CommonFiles\src\EventCategory.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\SudoguAdmin\utilities.c">
+    <ClCompile Include="..\CommonFiles\src\Menu.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\SudoguAdmin\vector.c">
+    <ClCompile Include="..\CommonFiles\src\Table.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\SudoguAdmin\Event.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SudoguAdmin\EventCategory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SudoguAdmin\bst.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SudoguAdmin\cmpfn.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SudoguAdmin\cslib.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SudoguAdmin\generic.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SudoguAdmin\iterator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SudoguAdmin\itertype.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SudoguAdmin\map.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SudoguAdmin\Menu.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SudoguAdmin\simpio.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SudoguAdmin\strbuf.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SudoguAdmin\strlib.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SudoguAdmin\Table.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SudoguAdmin\utilities.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SudoguAdmin\vector.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\city.txt">
@@ -121,5 +71,55 @@
     <Text Include="..\accounts.txt">
       <Filter>Resource Files</Filter>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\CommonFiles\cslib\include\bst.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\cmpfn.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\cslib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\generic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\iterator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\itertype.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\map.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\simpio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\strbuf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\strlib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\utilities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\vector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\include\Event.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\include\EventCategory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\include\Menu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\include\Table.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

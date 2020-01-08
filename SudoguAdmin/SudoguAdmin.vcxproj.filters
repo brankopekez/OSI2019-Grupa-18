@@ -18,101 +18,51 @@
     <ClCompile Include="SudoguAdmin.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cslib.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\bst.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cmpfn.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\cmpfn.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="strlib.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\cslib.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="generic.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\generic.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="iterator.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\iterator.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="simpio.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\map.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="strbuf.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\simpio.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="bst.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\strbuf.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="map.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\strlib.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="EventCategory.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\utilities.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Event.c">
+    <ClCompile Include="..\CommonFiles\cslib\src\vector.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="vector.c">
+    <ClCompile Include="..\CommonFiles\src\Event.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Menu.c">
+    <ClCompile Include="..\CommonFiles\src\EventCategory.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="utilities.c">
+    <ClCompile Include="..\CommonFiles\src\Menu.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Table.c">
+    <ClCompile Include="..\CommonFiles\src\Table.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="cslib.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="cmpfn.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="strlib.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="generic.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="iterator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="itertype.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="simpio.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="strbuf.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="bst.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="map.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="EventCategory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Event.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vector.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Menu.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="utilities.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Table.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\city.txt">
@@ -121,5 +71,55 @@
     <Text Include="..\accounts.txt">
       <Filter>Resource Files</Filter>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\CommonFiles\cslib\include\bst.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\cmpfn.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\cslib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\generic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\iterator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\itertype.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\map.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\simpio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\strbuf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\strlib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\utilities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\cslib\include\vector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\include\Event.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\include\EventCategory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\include\Menu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonFiles\include\Table.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

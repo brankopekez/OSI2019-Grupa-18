@@ -13,7 +13,7 @@
 #include <time.h>
 #include <locale.h>
 
-// Custom headers
+// CSLib header
 #include "cslib.h"
 #include "map.h"
 #include "iterator.h"
@@ -22,11 +22,13 @@
 #include "strlib.h"
 #include "strbuf.h"
 #include "generic.h"
+#include "utilities.h"
+#include "vector.h"
+
+// Custom headers
 #include "EventCategory.h"
 #include "Event.h"
-#include "vector.h"
 #include "Menu.h"
-#include "utilities.h"
 #include "Table.h"
 
 /** @brief	The logo */
