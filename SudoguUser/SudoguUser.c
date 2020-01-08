@@ -127,7 +127,7 @@ WORD wOldColorAttrs;
 CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
 
 /** @brief	The highlight attributes */
-WORD HIGHLIGHT_ATTRIBUTES = F_RED | B_WHITE | COMMON_LVB_REVERSE_VIDEO;
+WORD HIGHLIGHT_ATTRIBUTES = F_WHITE | B_BLUE;
 
 /** @brief	The window size x coordinate */
 const int windowSizeX = 121;
