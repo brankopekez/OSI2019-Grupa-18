@@ -4,6 +4,8 @@
  * @brief	Sudogu admin application. Main file.
  */
 
+#define _WIN32_WINNT 0x0500
+
  // System headers
 #include <stdio.h>
 #include <conio.h>
@@ -177,7 +179,7 @@ WORD wOldColorAttrs;
 CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
 
 /** @brief	The highlighting attributes */
-WORD HIGHLIGHT_ATTRIBUTES = F_RED | B_WHITE | COMMON_LVB_REVERSE_VIDEO;
+WORD HIGHLIGHT_ATTRIBUTES = F_WHITE | B_BLUE;
 
 /** @brief	The window size x coordinate */
 const int windowSizeX = 121;
@@ -248,12 +250,13 @@ void PrintLogo(void) {
 	// 38
 	COORD cursorPosition = { 0, 4 };
 	SetConsoleCursorPosition(hStdout, cursorPosition);
-	HIGHLIGHT_ATTRIBUTES = F_RED | B_WHITE;
+	WORD oldAttributes = HIGHLIGHT_ATTRIBUTES;
+	HIGHLIGHT_ATTRIBUTES = F_BLUE | B_WHITE;
 	for (int i = 0; i < 6; i++) {
 		PrintToConsoleFormatted(CENTER_ALIGN | HIGHLIGHT, logo[i]);
 		advanceCursor(1);
 	}
-	HIGHLIGHT_ATTRIBUTES = F_RED | B_WHITE | COMMON_LVB_REVERSE_VIDEO;
+	HIGHLIGHT_ATTRIBUTES = oldAttributes;
 	//advanceCursor(1);
 	//PrintToConsoleFormatted(CENTER_ALIGN, "Sistem upravljanja događajima");
 }

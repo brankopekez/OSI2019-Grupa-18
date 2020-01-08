@@ -260,12 +260,8 @@ static int PrintHighlightedRow(Table t, Vector columns) {
 }
 
 static int PrintFooter(Table t, Vector columns) {
-	DWORD cCharsWritten;
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	COORD position;
-	DWORD dwConSize;
-	WORD wOldColor;
-	WORD wAttributes = GetHighAttrTable(t);
 
 	// Get the number of character cells in the current buffer. 
 	// 
@@ -273,35 +269,12 @@ static int PrintFooter(Table t, Vector columns) {
 		return 0;
 	}
 
-	wOldColor = csbi.wAttributes;
-	dwConSize = csbi.dwSize.X;
 	position.X = 0;
 	position.Y = csbi.dwSize.Y - 1;
 
-	// Fill the title line with attributes.
-	// 
-	if (!FillConsoleOutputAttribute(hStdout,         // Handle to console screen buffer 
-		wAttributes,          // Character attributes to use
-		dwConSize,            // Number of cells to set attribute 
-		position,             // Coordinates of first cell 
-		&cCharsWritten))      // Receive number of characters written
-	{
-		return 0;
-	}
-
 	SetConsoleCursorPosition(hStdout, position);
 
-	// Set the text attributes. 
-	if (!SetConsoleTextAttribute(hStdout, wAttributes)) {
-		return 0;
-	}
-
-	int ret = PrintRow(t, columns);
-
-	// Restore the original text colors. 
-	SetConsoleTextAttribute(hStdout, wOldColor);
-
-	return ret;
+	return PrintHighlightedRow(t, columns);
 }
 
 static int DrawTable(Table table, int currentSelection, int startIndex) {
@@ -372,10 +345,33 @@ static int DrawTable(Table table, int currentSelection, int startIndex) {
 		}
 	}
 
-	// Print the footer.
+	DWORD oldMode;
+	DWORD newMode;
+
+	// Save the current input mode, to be restored on exit
+	// 
+	if (!GetConsoleMode(hStdout, &oldMode)) {
+		MessageBox(NULL, TEXT("GetConsoleMode"), TEXT("Console Error"), MB_OK);
+		exit(EXIT_FAILURE);
+	}
+
+	// Disable wraping on line end
+	// 
+	newMode = oldMode &
+		~(ENABLE_WRAP_AT_EOL_OUTPUT);
+	if (!SetConsoleMode(hStdout, newMode)) {
+		return 0;
+	}
+
+	// Print the footer
+	// 
 	if (!PrintFooter(table, GetFooterTable(table))) {
 		return 0;
 	}
+
+	// Restore the original console mode
+	// 
+	SetConsoleMode(hStdout, oldMode);
 
 	// Clean up.
 	FreeStringVector FreeFn = GetFreeStringVectorFnTable(table);
