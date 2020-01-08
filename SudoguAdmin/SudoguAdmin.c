@@ -232,6 +232,7 @@ StringBuffer readPassword(void) {
 		pushChar(password, ch);
 		_putch('*');
 	} while (ch != '\n');
+	return password;
 }
 
 /**
@@ -417,11 +418,11 @@ string InputEventCategory(Table categories) {
 	string categoryName;
 
 	Table cpyTable = CloneTable(categories);
-	freeVector(GetFooterTable(categories));
+	freeVector(GetFooterTable(cpyTable));
 	Vector footer = newVector();
 	string tmp = copyString(" RETURN: Izaberi kategoriju.");
 	addVector(footer, tmp);
-	SetFooterTable(categories, footer);
+	SetFooterTable(cpyTable, footer);
 
 	DWORD fdwMode, fdwOldMode;
 

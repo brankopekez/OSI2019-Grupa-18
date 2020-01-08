@@ -114,4 +114,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\city.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="..\accounts.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+  </ItemGroup>
 </Project>

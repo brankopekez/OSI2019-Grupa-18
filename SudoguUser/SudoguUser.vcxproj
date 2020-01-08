@@ -175,6 +175,10 @@
     <ClInclude Include="..\SudoguAdmin\utilities.h" />
     <ClInclude Include="..\SudoguAdmin\vector.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\accounts.txt" />
+    <Text Include="..\city.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

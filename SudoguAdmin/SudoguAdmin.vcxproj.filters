@@ -65,10 +65,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="accounts.txt" />
-    <Text Include="city.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="cslib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -117,5 +113,13 @@
     <ClInclude Include="Table.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\city.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="..\accounts.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

@@ -301,7 +301,7 @@ static int PrintFooter(Table t, Vector columns) {
 	// Restore the original text colors. 
 	SetConsoleTextAttribute(hStdout, wOldColor);
 
-	return 1;
+	return ret;
 }
 
 static int DrawTable(Table table, int currentSelection, int startIndex) {

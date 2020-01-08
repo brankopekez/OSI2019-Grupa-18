@@ -77,6 +77,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <EnableClangTidyCodeAnalysis>false</EnableClangTidyCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -158,10 +160,6 @@
     <ClCompile Include="vector.c" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="accounts.txt" />
-    <Text Include="city.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="bst.h" />
     <ClInclude Include="cmpfn.h" />
     <ClInclude Include="cslib.h" />
@@ -178,6 +176,20 @@
     <ClInclude Include="Table.h" />
     <ClInclude Include="utilities.h" />
     <ClInclude Include="vector.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\accounts.txt">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </DeploymentContent>
+    </Text>
+    <Text Include="..\city.txt">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </DeploymentContent>
+    </Text>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
