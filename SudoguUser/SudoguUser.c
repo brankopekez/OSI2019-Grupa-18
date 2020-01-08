@@ -374,6 +374,19 @@ int IsFutureEvent(const void* p1, const void* p2) {
 	}
 }
 
+int IsPastEvent(const void* p1, const void* p2) {
+	Event event = (Event) p1;
+	time_t now = *(time_t*) p2;
+	time_t eventTime = getEventTime(event);
+
+	if (difftime(eventTime, now) < 0) {
+		return 0;
+	}
+	else {
+		return 1;
+	}
+}
+
 int IsCategoryEvent(const void* p1, const void* p2) {
 	Event event = (Event) p1;
 	string categoryToCompareTo = (string) p2;
@@ -422,6 +435,21 @@ int ShowFutureEvents(Table eventsTable) {
 	time(&now);
 
 	Vector filteredVector = FilterVector(eventsVector, IsFutureEvent, &now);
+	freeVector(eventsVector);
+	SetDataTable(filteredTable, filteredVector);
+	int res = EventsHandling(filteredTable);
+	FreeTable(filteredTable);
+	return res;
+}
+
+int ShowPastEvents(Table eventsTable) {
+	Table filteredTable = CloneTable(eventsTable);
+	Vector eventsVector = GetDataTable(filteredTable);
+
+	time_t now;
+	time(&now);
+
+	Vector filteredVector = FilterVector(eventsVector, IsPastEvent, &now);
 	freeVector(eventsVector);
 	SetDataTable(filteredTable, filteredVector);
 	int res = EventsHandling(filteredTable);
@@ -506,7 +534,7 @@ int main(void) {
 	SetHighAttrTable(eventsTable, HIGHLIGHT_ATTRIBUTES);
 	SetToStringVectorFnTable(eventsTable, EventToVector);
 	SetFreeStringVectorFnTable(eventsTable, FreeEventStringVector);
-	SetCompareFnTable(eventsTable, CompareEventNames);
+	SetCompareFnTable(eventsTable, CompareEventTimesDescending);
 
 
 	Table categoriesTable = NewTable();
@@ -560,9 +588,9 @@ int main(void) {
 			}
 			break;
 		case MENU_PAST_EVENTS:
-			/*if (!ShowPastEvents(eventsTable)) {
+			if (!ShowPastEvents(eventsTable)) {
 				error_msg("Nije moguce prikazati dogadjaje.");
-			}*/
+			}
 			break;
 		case EXIT:
 			done = TRUE;

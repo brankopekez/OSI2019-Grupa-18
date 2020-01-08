@@ -956,7 +956,7 @@ int main(void) {
 	SetHighAttrTable(eventsTable, HIGHLIGHT_ATTRIBUTES);
 	SetToStringVectorFnTable(eventsTable, EventToVector);
 	SetFreeStringVectorFnTable(eventsTable, FreeEventStringVector);
-	SetCompareFnTable(eventsTable, CompareEventNames);
+	SetCompareFnTable(eventsTable, CompareEventTimesDescending);
 
 
 	Table categoriesTable = NewTable();
