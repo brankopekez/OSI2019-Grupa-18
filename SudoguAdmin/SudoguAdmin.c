@@ -1,6 +1,17 @@
-﻿#include <stdio.h>
+﻿/**
+ * @file	SudoguAdmin.c.
+ *
+ * @brief	Sudogu admin application. Main file.
+ */
+
+ // System headers
+#include <stdio.h>
 #include <conio.h>
 #include <windows.h>
+#include <time.h>
+#include <locale.h>
+
+// Custom headers
 #include "cslib.h"
 #include "map.h"
 #include "iterator.h"
@@ -12,12 +23,11 @@
 #include "EventCategory.h"
 #include "Event.h"
 #include "vector.h"
-#include <time.h>
-#include <locale.h>
 #include "Menu.h"
 #include "utilities.h"
 #include "Table.h"
 
+/** @brief	The logo */
 string logo[6] = {
 	"   _____           __                 ",
 	"  / ___/__  ______/ /___  ____ ___  __",
@@ -35,10 +45,20 @@ string menuOptions[4] = {
 	" Izlaz "
 };
 
+/**
+ * @enum	M_MENU
+ *
+ * @brief	Values that represent options inside the main menu.
+ */
+
 enum M_MENU {
+	///< An enum constant representing the event handling option
 	EVENT_HANDLING,
+	///< An enum constant representing the category handling option
 	CATEGORY_HANDLING,
+	///< An enum constant representing the logout option
 	LOGOUT,
+	///< An enum constant representing the exit option
 	EXIT
 };
 
@@ -59,23 +79,36 @@ string eventsFooter[5] = {
 	"F10: Sortiraj listu."
 };
 
+/** @brief	The categories header[ 1] */
 string categoriesHeader[1] = {
 	"Naziv kategorije događaja"
 };
 
+/** @brief	The categories footer[ 3] */
 string categoriesFooter[3] = {
 	"ESC: Izlaz.",
 	"DELETE: Obriši kategoriju.",
 	"F9: Dodaj novu kategoriju.",
 };
 
+/**
+ * @enum	EVENTS_HEADER_OPTIONS
+ *
+ * @brief	Values that represent events table column names (when sorting).
+ */
+
 enum EVENTS_HEADER_OPTIONS {
+	///< An enum constant representing the events name column
 	EVENTS_HEADER_NAME,
+	///< An enum constant representing the events location column
 	EVENTS_HEADER_LOCATION,
+	///< An enum constant representing the events category column
 	EVENTS_HEADER_CATEGORY,
+	///< An enum constant representing the events time column
 	EVENTS_HEADER_TIME
 };
 
+/** @brief	The event fields */
 string eventFields[5] = {
 	"Naziv",
 	"Lokacija",
@@ -84,14 +117,26 @@ string eventFields[5] = {
 	"Opis"
 };
 
+/**
+ * @enum	EDIT_EVENT_MENU
+ *
+ * @brief	Values that represent options in edit event menu
+ */
+
 enum EDIT_EVENT_MENU {
+	///< An enum constant representing the edit event name option
 	EDIT_EVENT_NAME,
+	///< An enum constant representing the edit event location option
 	EDIT_EVENT_LOCATION,
+	///< An enum constant representing the edit event category option
 	EDIT_EVENT_CATEGORY,
+	///< An enum constant representing the edit event time option
 	EDIT_EVENT_TIME,
+	///< An enum constant representing the edit event description option
 	EDIT_EVENT_DESCRIPTION
 };
 
+/** @brief	The predefined categories */
 string categoriesPredefined[3] = {
 	"Izložbe",
 	"Koncerti",
@@ -101,13 +146,13 @@ string categoriesPredefined[3] = {
 /** @brief	Global variable for accounts config file name */
 const string fileAccounts = "accounts.txt";
 
-/** @brief	The city config file name  */
+/** @brief	The city config file name */
 const string fileCity = "city.txt";
 
-/** @brief	The events data file name  */
+/** @brief	The events data file name */
 const string fileEvents = "events.dat";
 
-/** @brief	The event categories data file name  */
+/** @brief	The event categories data file name */
 const string fileCategories = "categories.dat";
 
 /** @brief	Name of the program (used on error) */
@@ -125,83 +170,20 @@ HANDLE hStdin;
 /** @brief	Variable to save the original console mode */
 DWORD fdwSaveOldMode;
 
-/** @brief	The original color attributes */
+/** @brief	The original color attributes of the console */
 WORD wOldColorAttrs;
 
-/** @brief	Information describing the console screen sb */
+/** @brief	Information describing the console screen buffer */
 CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
 
+/** @brief	The highlighting attributes */
 WORD HIGHLIGHT_ATTRIBUTES = F_RED | B_WHITE | COMMON_LVB_REVERSE_VIDEO;
 
+/** @brief	The window size x coordinate */
 const int windowSizeX = 121;
+
+/** @brief	The window size y coordinate */
 const int windowSizeY = 33;
-
-/**
- * @fn	int fileToMap(string filename, Map map)
- *
- * @brief	Reads a file and maps key:value pairs.
- *
- * @author	Pynikleois
- * @date	26.12.2019.
- *
- * @param 	filename	Filename of the file.
- * @param 	map			The map.
- *
- * @returns	An int. 1 on success, 0 otherwise.
- */
-
-int fileToMap(string filename, Map map) {
-	FILE* inFile = fopen(filename, "r");
-	if (!inFile) {
-		error_msg("fopen()");
-	}
-	string line;
-	while ((line = readLine(inFile)) != NULL) {
-		int delimPos = findChar(':', line, 0);
-
-		string key = substring(line, 0, delimPos - 1);
-		string value = substring(line, delimPos + 1, stringLength(line) - 1);
-		if (stringLength(key) == 0 || stringLength(value) == 0) {
-			return 0;
-		}
-		else {
-			if (containsKeyMap(map, key) == true) {
-				return 0;
-			}
-			putMap(map, key, value);
-		}
-		freeBlock(line);
-	}
-	fclose(inFile);
-	return 1;
-}
-
-/**
- * @fn	void freeMapFields(Map Map)
- *
- * @brief	Frees accounts map and all of its allocated fields.
- *
- * @author	Pynikleois
- * @date	26.12.2019.
- *
- * @param 	Map	The accounts map.
- */
-
-void freeMapFields(Map Map) {
-	string key;
-	Iterator iterator = newIterator(Map);
-	while (stepIterator(iterator, &key)) {
-		freeBlock(getMap(Map, key));
-	}
-	freeIterator(iterator);
-	iterator = newIterator(Map);
-	while (stepIterator(iterator, &key)) {
-		freeBlock(key);
-	}
-	freeIterator(iterator);
-
-	freeMap(Map);
-}
 
 /**
  * @fn	StringBuffer readPassword(void)
@@ -252,6 +234,15 @@ StringBuffer readPassword(void) {
 	} while (ch != '\n');
 }
 
+/**
+ * @fn	void PrintLogo(void)
+ *
+ * @brief	Print logo.
+ *
+ * @author	Pynikleois
+ * @date	1/8/2020
+ */
+
 void PrintLogo(void) {
 	// 38
 	COORD cursorPosition = { 0, 4 };
@@ -265,6 +256,18 @@ void PrintLogo(void) {
 	//advanceCursor(1);
 	//PrintToConsoleFormatted(CENTER_ALIGN, "Sistem upravljanja događajima");
 }
+
+/**
+ * @fn	void loginAttempt(string* inUsername, string* inPassword)
+ *
+ * @brief	Login attempt
+ *
+ * @author	Pynikleois
+ * @date	1/8/2020
+ *
+ * @param [in,out]	inUsername	If non-null, the pointer to a variable to write the user name to.
+ * @param [in,out]	inPassword	If non-null, the pointer to a variable to write the password to.
+ */
 
 void loginAttempt(string* inUsername, string* inPassword) {
 	LPSTR prompt1 = "Username: ";
@@ -308,16 +311,12 @@ void loginAttempt(string* inUsername, string* inPassword) {
 }
 
 /**
- * @fn	int login(string* username)
+ * @fn	void login(void)
  *
  * @brief	Logins a user.
  *
  * @author	Pynikleois
  * @date	26.12.2019.
- *
- * @param [in,out]	username	If non-null, the username.
- *
- * @returns	An int 1 if successful, 0 otherwise.
  */
 
 void login(void) {
@@ -357,7 +356,7 @@ void login(void) {
 		if (containsKeyMap(accountsMap, inUsername) == true) {
 			string correctPassword = getMap(accountsMap, inUsername);
 			if (stringCompare(inPassword, correctPassword) == 0) {
-				username = inUsername;
+				username = copyString(inUsername);
 				break;
 			}
 			else {
@@ -383,14 +382,12 @@ void login(void) {
 }
 
 /**
- * @fn	void logout(string username)
+ * @fn	void logout(void)
  *
- * @brief	Logout
+ * @brief	Logouts a user.
  *
  * @author	Pynikleois
  * @date	26.12.2019.
- *
- * @param 	username	The username.
  */
 
 void logout(void) {
@@ -398,6 +395,19 @@ void logout(void) {
 }
 
 void windowSetup(void);
+
+/**
+ * @fn	string InputEventCategory(Table categories)
+ *
+ * @brief	Displays the categories table and enables user to select one of them.
+ *
+ * @author	Pynikleois
+ * @date	1/8/2020
+ *
+ * @param 	categories	The categories table.
+ *
+ * @returns	A string that contains name of the chosen category.
+ */
 
 string InputEventCategory(Table categories) {
 	// Save the cursor info.
@@ -467,6 +477,17 @@ string InputEventCategory(Table categories) {
 	return categoryName;
 }
 
+/**
+ * @fn	time_t InputEventTime(void)
+ *
+ * @brief	Input event time
+ *
+ * @author	Pynikleois
+ * @date	1/8/2020
+ *
+ * @returns	A time_t.
+ */
+
 time_t InputEventTime(void) {
 	int day, month, year, hour, minute;
 	PrintToConsole("\tDatum (mora biti u obliku \"dan.mjesec.godina.\"): ");
@@ -491,6 +512,20 @@ time_t InputEventTime(void) {
 	eventTime = mktime(&dateTime);
 	return eventTime;
 }
+
+/**
+ * @fn	int NewEventScreen(Table events, Table categories)
+ *
+ * @brief	Creates a new event screen
+ *
+ * @author	Pynikleois
+ * @date	1/8/2020
+ *
+ * @param 	events	  	The events.
+ * @param 	categories	The categories.
+ *
+ * @returns	An int: 1 on success, 0 otherwise.
+ */
 
 int NewEventScreen(Table events, Table categories) {
 	string title = "Unos novog događaja";
@@ -552,6 +587,17 @@ int NewEventScreen(Table events, Table categories) {
 	return 1;
 }
 
+/**
+ * @fn	void SortEventsTable(Table t)
+ *
+ * @brief	Sorts events table.
+ *
+ * @author	Pynikleois
+ * @date	1/8/2020
+ *
+ * @param 	t	A Table of Events to process.
+ */
+
 void SortEventsTable(Table t) {
 	Vector header = GetHeaderTable(t);
 	Menu menu = newMenu();
@@ -587,6 +633,21 @@ void SortEventsTable(Table t) {
 	}
 
 }
+
+/**
+ * @fn	int EditEvent(Table events, Table categories, int index)
+ *
+ * @brief	Edit event
+ *
+ * @author	Pynikleois
+ * @date	1/8/2020
+ *
+ * @param 	events	  	The events.
+ * @param 	categories	The categories.
+ * @param 	index	  	Index of the chosen event.
+ *
+ * @returns	An int: 1 on success, 0 otherwise.
+ */
 
 int EditEvent(Table events, Table categories, int index) {
 	Vector data = GetDataTable(events);
@@ -658,6 +719,21 @@ int EditEvent(Table events, Table categories, int index) {
 	}
 	return 1;
 }
+
+/**
+ * @fn	int ShowEventDetails(Table events, Table categories, int index)
+ *
+ * @brief	Shows the event details
+ *
+ * @author	Pynikleois
+ * @date	1/8/2020
+ *
+ * @param 	events	  	The events.
+ * @param 	categories	The categories.
+ * @param 	index	  	Index of the chosen event.
+ *
+ * @returns	An int: 1 on success, 0 otherwise.
+ */
 
 int ShowEventDetails(Table events, Table categories, int index) {
 	Vector data = GetDataTable(events);
@@ -744,6 +820,20 @@ int ShowEventDetails(Table events, Table categories, int index) {
 	return 1;
 }
 
+/**
+ * @fn	int EventsHandling(Table events, Table categories)
+ *
+ * @brief	Events handling
+ *
+ * @author	Pynikleois
+ * @date	1/8/2020
+ *
+ * @param 	events	  	The events.
+ * @param 	categories	The categories.
+ *
+ * @returns	An int.
+ */
+
 int EventsHandling(Table events, Table categories) {
 	DWORD fdwMode, fdwOldMode;
 
@@ -826,6 +916,17 @@ int EventsHandling(Table events, Table categories) {
 	return 1;
 }
 
+/**
+ * @fn	void NewCategoryScreen(Table table)
+ *
+ * @brief	Screen for creating a new category.
+ *
+ * @author	Pynikleois
+ * @date	1/8/2020
+ *
+ * @param 	table	The categories table.
+ */
+
 void NewCategoryScreen(Table table) {
 	string title = "Unos nove kategorije događaja";
 	system("cls");
@@ -841,6 +942,19 @@ void NewCategoryScreen(Table table) {
 	Vector categories = GetDataTable(table);
 	addVector(categories, cat);
 }
+
+/**
+ * @fn	int CategoriesHandling(Table table)
+ *
+ * @brief	Categories handling
+ *
+ * @author	Pynikleois
+ * @date	1/8/2020
+ *
+ * @param 	table	The categories table.
+ *
+ * @returns	An int: 1 on success, 0 otherwise.
+ */
 
 int CategoriesHandling(Table table) {
 	DWORD fdwMode, fdwOldMode;
@@ -900,9 +1014,28 @@ int CategoriesHandling(Table table) {
 	return 1;
 }
 
+/**
+ * @fn	int main(void)
+ *
+ * @brief	Main entry-point for this application
+ *
+ * @author	Pynikleois
+ * @date	1/8/2020
+ *
+ * @returns	Exit-code for the process - 0 for success, else an error code.
+ */
+
 int main(void) {
+
+	// Setup the window
 	windowSetup();
+
+	// Vector to hold all events
 	Vector events;
+	
+	// Check if the events data file exists, and read it if it does. 
+	// Otherwise, create new vector.
+	// 
 	if (fileExists(fileEvents)) {
 		events = ReadEventsFromFile(fileEvents);
 	}
@@ -910,7 +1043,12 @@ int main(void) {
 		events = newVector();
 	}
 
+	// Vector to hold all categories
 	Vector categories;
+	
+	// Check if the categories data file exists, and read it if it does. 
+	// Otherwise, create new vector.
+	// 
 	if (fileExists(fileCategories)) {
 		categories = ReadCategoriesFromFile(fileCategories);
 	}
@@ -927,57 +1065,112 @@ int main(void) {
 		SaveCategoriesToFile(categories, fileCategories);
 	}
 
+	// Main menu
 	Menu menu = newMenu();
+	
+	// Initialize menu with options
+	// 
 	Vector menuVector = getMenuOptions(menu);
 	freeVector(menuVector);
 	Vector tmp = arrayToVector(menuOptions, 4);
 	setMenuOptions(menu, tmp);
+
+	// Center the menu
+	// 
 	centerMenu(menu);
+	
+	// Set main menu attributes for highlighting.
+	// 
 	setHighlightAttributes(menu, HIGHLIGHT_ATTRIBUTES);
 
 
+	// Table for all events
+	// 
 	Table eventsTable = NewTable();
 	freeVector(GetDataTable(eventsTable));
 	SetDataTable(eventsTable, events);
 
-	Vector header = newVector();
+	// Set the header and the footer of the new table.
+	// 
+	Vector tmpVector = newVector();
 	for (int i = 0; i < 4; i++) {
 		string tmp = copyString(eventsHeader[i]);
-		addVector(header, tmp);
+		addVector(tmpVector, tmp);
 	}
-	SetHeaderTable(eventsTable, header);
-	header = newVector();
+	SetHeaderTable(eventsTable, tmpVector);
+	tmpVector = newVector();
 	for (int i = 0; i < 5; i++) {
 		string tmp = copyString(eventsFooter[i]);
-		addVector(header, tmp);
+		addVector(tmpVector, tmp);
 	}
-	SetFooterTable(eventsTable, header);
+	SetFooterTable(eventsTable, tmpVector);
 
+	// Set attributes for highlighting inside the table.
+	// 
 	SetHighAttrTable(eventsTable, HIGHLIGHT_ATTRIBUTES);
+	
+	// Set function for converting the event to a vector of strings
+	// 
 	SetToStringVectorFnTable(eventsTable, EventToVector);
+	
+	// Set function for deallocating the vector of strings
+	// 
 	SetFreeStringVectorFnTable(eventsTable, FreeEventStringVector);
+	
+	// Set funciton for comparing the events.
+	// Used for sorting the table before drawing it.
+	// 
 	SetCompareFnTable(eventsTable, CompareEventTimesDescending);
 
 
+	// Table for all categories
+	// 
 	Table categoriesTable = NewTable();
 	freeVector(GetDataTable(categoriesTable));
 	SetDataTable(categoriesTable, categories);
+	
+	// Set attributes for highlighting inside the table.
+	// 
 	SetHighAttrTable(categoriesTable, HIGHLIGHT_ATTRIBUTES);
+	
+	// Set function for converting the event category to a vector of strings
+	// 
 	SetToStringVectorFnTable(categoriesTable, EventCategoryToVector);
+	
+	// Set function for deallocating the vector of strings
+	// 
 	SetFreeStringVectorFnTable(categoriesTable, FreeEventCategoryStringVector);
+	
+	// Set funciton for comparing the event categories.
+	// Used for sorting the table before drawing it.
+	// 
 	SetCompareFnTable(categoriesTable, CompareEventCategoryName);
-	header = newVector();
+	
+	// Set the header and the footer of the new table.
+	// 
+	tmpVector = newVector();
 	for (int i = 0; i < 1; i++) {
 		string tmp = copyString(categoriesHeader[i]);
-		addVector(header, tmp);
+		addVector(tmpVector, tmp);
 	}
-	SetHeaderTable(categoriesTable, header);
-	header = newVector();
+	SetHeaderTable(categoriesTable, tmpVector);
+	tmpVector = newVector();
 	for (int i = 0; i < 3; i++) {
 		string tmp = copyString(categoriesFooter[i]);
-		addVector(header, tmp);
+		addVector(tmpVector, tmp);
 	}
-	SetFooterTable(categoriesTable, header);
+	SetFooterTable(categoriesTable, tmpVector);
+
+	// City name, read from a config file
+	string cityName = NULL;
+	Map cityMap = newMap();
+	if (fileToMap(fileCity, cityMap) != 1) {
+		freeMapFields(cityMap);
+		error_msg("Neispravna konfiguracija parametara grada unutar datoteke %s.\n", fileCity);
+	}
+	else {
+		cityName = getMap(cityMap, "name");
+	}
 
 	// Variable for registering end.
 	BOOL done = FALSE;
@@ -992,7 +1185,14 @@ int main(void) {
 		login();
 		loggedOut = FALSE;
 		while (!loggedOut && !done) {
+			// Clear the screen
 			system("cls");
+
+			// Print city and user name
+			advanceCursor(3);
+			PrintToConsole("\tMjesto: %s\n", cityName);
+			PrintToConsole("\tKorisnik: %s", username);
+
 			if (!mainMenu(menu, &menuOption)) {
 				error_msg("mainMenu");
 			}
@@ -1028,6 +1228,15 @@ int main(void) {
 
 	return 0;
 }
+
+/**
+ * @fn	void windowSetup(void)
+ *
+ * @brief	Window setup
+ *
+ * @author	Pynikleois
+ * @date	1/8/2020
+ */
 
 void windowSetup(void) {
 	// Set codepage. Needed for Serbian Latin chars.

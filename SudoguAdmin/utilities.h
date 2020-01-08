@@ -7,6 +7,7 @@
 #include "Event.h"
 #include "EventCategory.h"
 #include <io.h>
+#include "map.h"
 
 /**
  * @enum	F_COLOR
@@ -133,5 +134,9 @@ CHAR_INFO* SaveScreenBuffer(void);
 int RecoverScreenBuffer(CHAR_INFO* chiBuffer);
 
 void SetConsoleWindowSize(int x, int y);
+
+int fileToMap(string filename, Map map);
+
+void freeMapFields(Map Map);
 
 #endif // !_utilities_h

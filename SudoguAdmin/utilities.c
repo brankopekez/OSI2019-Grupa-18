@@ -10,6 +10,7 @@
 #include "EventCategory.h"
 #include "simpio.h"
 #include "strlib.h"
+#include "map.h"
 
 // Extern variables.
 extern HANDLE hStdout;
@@ -923,4 +924,71 @@ void SetConsoleWindowSize(int x, int y) {
 	SMALL_RECT info = { 0, 0, x - 1, y - 1 };
 	if (!SetConsoleWindowInfo(h, TRUE, &info))
 		error_msg("Unable to resize window after resizing buffer.");
+}
+
+/**
+ * @fn	int fileToMap(string filename, Map map)
+ *
+ * @brief	Reads a file and maps key:value pairs.
+ *
+ * @author	Pynikleois
+ * @date	26.12.2019.
+ *
+ * @param 	filename	Filename of the file.
+ * @param 	map			The map.
+ *
+ * @returns	An int. 1 on success, 0 otherwise.
+ */
+
+int fileToMap(string filename, Map map) {
+	FILE* inFile = fopen(filename, "r");
+	if (!inFile) {
+		error_msg("fopen()");
+	}
+	string line;
+	while ((line = readLine(inFile)) != NULL) {
+		int delimPos = findChar(':', line, 0);
+
+		string key = substring(line, 0, delimPos - 1);
+		string value = substring(line, delimPos + 1, stringLength(line) - 1);
+		if (stringLength(key) == 0 || stringLength(value) == 0) {
+			return 0;
+		}
+		else {
+			if (containsKeyMap(map, key) == true) {
+				return 0;
+			}
+			putMap(map, key, value);
+		}
+		freeBlock(line);
+	}
+	fclose(inFile);
+	return 1;
+}
+
+/**
+ * @fn	void freeMapFields(Map Map)
+ *
+ * @brief	Frees accounts map and all of its allocated fields.
+ *
+ * @author	Pynikleois
+ * @date	26.12.2019.
+ *
+ * @param 	Map	The accounts map.
+ */
+
+void freeMapFields(Map Map) {
+	string key;
+	Iterator iterator = newIterator(Map);
+	while (stepIterator(iterator, &key)) {
+		freeBlock(getMap(Map, key));
+	}
+	freeIterator(iterator);
+	iterator = newIterator(Map);
+	while (stepIterator(iterator, &key)) {
+		freeBlock(key);
+	}
+	freeIterator(iterator);
+
+	freeMap(Map);
 }
