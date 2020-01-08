@@ -104,7 +104,7 @@ const int windowSizeY = 33;
 
 void windowSetup(void);
 
-string InputEventCategory(Table categories, int *tableSelection) {
+string InputEventCategory(Table categories, int* tableSelection) {
 	// Save the cursor info.
 	CONSOLE_CURSOR_INFO oldInfo;
 	GetConsoleCursorInfo(hStdout, &oldInfo);
@@ -161,7 +161,7 @@ string InputEventCategory(Table categories, int *tableSelection) {
 	else {
 		categoryName = NULL;
 	}
-	
+
 	// Restore the original console mode. 
 	SetConsoleMode(hStdin, fdwOldMode);
 
@@ -361,6 +361,19 @@ int IsTodaysEvent(const void* p1, const void* p2) {
 	}
 }
 
+int IsFutureEvent(const void* p1, const void* p2) {
+	Event event = (Event) p1;
+	time_t now = *(time_t*) p2;
+	time_t eventTime = getEventTime(event);
+
+	if (difftime(eventTime, now) > 0) {
+		return 0;
+	}
+	else {
+		return 1;
+	}
+}
+
 int IsCategoryEvent(const void* p1, const void* p2) {
 	Event event = (Event) p1;
 	string categoryToCompareTo = (string) p2;
@@ -394,6 +407,21 @@ int ShowTodaysEvents(Table eventsTable) {
 	tmNow = *localtime(&now);
 
 	Vector filteredVector = FilterVector(eventsVector, IsTodaysEvent, &tmNow);
+	freeVector(eventsVector);
+	SetDataTable(filteredTable, filteredVector);
+	int res = EventsHandling(filteredTable);
+	FreeTable(filteredTable);
+	return res;
+}
+
+int ShowFutureEvents(Table eventsTable) {
+	Table filteredTable = CloneTable(eventsTable);
+	Vector eventsVector = GetDataTable(filteredTable);
+
+	time_t now;
+	time(&now);
+
+	Vector filteredVector = FilterVector(eventsVector, IsFutureEvent, &now);
 	freeVector(eventsVector);
 	SetDataTable(filteredTable, filteredVector);
 	int res = EventsHandling(filteredTable);
@@ -527,9 +555,9 @@ int main(void) {
 			}
 			break;
 		case MENU_FUTURE_EVENTS:
-			/*if (!ShowFutureEvents(eventsTable)) {
+			if (!ShowFutureEvents(eventsTable)) {
 				error_msg("Nije moguce prikazati dogadjaje.");
-			}*/
+			}
 			break;
 		case MENU_PAST_EVENTS:
 			/*if (!ShowPastEvents(eventsTable)) {
