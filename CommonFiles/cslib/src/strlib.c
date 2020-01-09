@@ -116,7 +116,7 @@ int stringCompare(string s1, string s2) {
     if (s1 == NULL || s2 == NULL) {
         error("stringCompare: String value is NULL");
     }
-    cmp = strcmp(s1, s2);
+    cmp = strcoll(s1, s2);
     if (cmp == 0) return 0;
     return (cmp < 0) ? -1 : +1;
 }
