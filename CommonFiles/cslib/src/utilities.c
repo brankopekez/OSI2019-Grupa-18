@@ -477,6 +477,8 @@ void SaveCategoriesToFile(Vector categories, string fileName) {
 	else {
 		// File was opened, filepoint can be used to read the stream.
 
+		CompareFn cmpFn = CompareEventCategoryName;
+		QuickSortVector(categories, 0, sizeVector(categories) - 1, cmpFn);
 		size_t count = sizeVector(categories);
 		fwrite(&count, sizeof count, 1, filepoint);
 		for (size_t i = 0; i < count; i++) {

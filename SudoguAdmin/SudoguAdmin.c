@@ -469,7 +469,7 @@ string InputEventCategory(Table categories) {
 			break;
 		}
 	}
-	EventCategory chosenCategory = getVector(GetDataTable(categories), tableSelection);
+	EventCategory chosenCategory = getVector(GetDataTable(cpyTable), tableSelection);
 	categoryName = getEventCategoryName(chosenCategory);
 	freeBlock(tmp);
 	FreeTable(cpyTable);
