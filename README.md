@@ -51,6 +51,7 @@ Za instaliranje aplikacija potrebno je raspakovati arhivu pod nazivom „Sudogu.
 2.	SudoguUser.exe – korisnička aplikacija za pregled i praćenje događaja,
 3.	accounts.txt – konfiguracija naloga,
 4.	city.txt – konfiguracija parametara grada u kom se događaji prate.
+
 Preporučuje se registracija novog korisnika i konfigurisanje parametara grada u kom se događaji prate (opisano u nastavku) odmah nakon instalacije.
 Aplikacije se na nekim sistemima moraju pokrenuti sa administratorskim privilegijama.
 
