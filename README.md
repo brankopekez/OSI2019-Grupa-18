@@ -148,9 +148,3 @@ Po otvaranju liste događaja, pritiskom na taster *RETURN*, dobijaju se detalji 
 
 * 1.0
     * Prva verzija aplikacije
-
-## Meta
-
-Branko Pekez – branko.pekez.peka@gmail.com
-
-[https://github.com/Pynikleois](https://github.com/Pynikleois)
